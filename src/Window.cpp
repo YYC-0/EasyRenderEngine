@@ -27,6 +27,7 @@ Window::Window(std::string windowName, int width, int height)
 
 Window::~Window()
 {
+    glfwTerminate();
 }
 
 void Window::framebuffer_size_callback(GLFWwindow * window, int width, int height)

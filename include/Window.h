@@ -13,6 +13,8 @@ public:
 
 	GLFWwindow* getGLFWWindow() { return glfwWindow; }
 	void setCamera(Camera *camera) { this->camera = camera; }
+	int getWidth() { return windowWidth; }
+	int getHeight() { return windowHeight; }
 
 	// whenever the window size changed(by OS or user resize) this callback function executes
 	static void framebuffer_size_callback(GLFWwindow *window, int width, int height);
