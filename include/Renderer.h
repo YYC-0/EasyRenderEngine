@@ -1,9 +1,11 @@
 #pragma once
 #include <string>
+#include <memory>
 
 #include "Camera.h"
 #include "Shader.h"
 #include "Window.h"
+#include "Mesh.h"
 
 using namespace std;
 
@@ -13,13 +15,13 @@ public:
 	Renderer();
 	~Renderer();
 
-	void init(string windowName, int windowWidth, int windowHeight, Camera *camera_);
+	void init(string windowName, int windowWidth, int windowHeight, shared_ptr<Camera> camera_);
 	void run();
 
 private:
-	Window *window;
+	shared_ptr<Window> window;
 	GLFWwindow *glfwWindow;
-	Camera *camera;
+	shared_ptr<Camera> camera;
 
 	// timing
 	float deltaTime;

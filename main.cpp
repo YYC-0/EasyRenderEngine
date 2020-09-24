@@ -11,6 +11,8 @@
 #include "include/Renderer.h"
 
 #include <iostream>
+#include <memory>
+using namespace std;
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -21,11 +23,11 @@ class myRenderer : public Renderer
 public:
     myRenderer()
     {
-        camera = new Camera(glm::vec3(0.0f, 0.0f, 3.0f));
+        camera = make_shared<Camera>(glm::vec3(0.0f, 0.0f, 3.0f));
         init("test", SCR_WIDTH, SCR_HEIGHT, camera);
     }
 
-    Camera *camera;
+    shared_ptr<Camera> camera;
 };
 
 int main()

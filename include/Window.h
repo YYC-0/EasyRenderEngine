@@ -2,6 +2,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <string>
+#include <memory>
 #include "Camera.h"
 
 class Window
@@ -12,7 +13,7 @@ public:
 	~Window();
 
 	GLFWwindow* getGLFWWindow() { return glfwWindow; }
-	void setCamera(Camera *camera) { this->camera = camera; }
+	void setCamera(std::shared_ptr<Camera> camera) { this->camera = camera; }
 	int getWidth() { return windowWidth; }
 	int getHeight() { return windowHeight; }
 
@@ -34,7 +35,7 @@ private:
 	std::string windowName;
 
 	// for mouse and scroll event
-	Camera *camera;
+	std::shared_ptr<Camera> camera;
 	float lastX;
 	float lastY;
 	bool firstMouse;
