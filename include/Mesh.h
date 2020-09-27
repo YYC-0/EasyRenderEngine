@@ -5,6 +5,9 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
+#include <memory>
+#include "Material.h"
+#include "Shader.h"
 using namespace std;
 
 class Mesh
@@ -14,7 +17,8 @@ public:
 	~Mesh();
 
 	void createCube();
-	void draw();
+	void setMaterial(Material m);
+	void draw(shared_ptr<Shader> shader);
 	unsigned int getVAO() { return VAO; }
 
 private:
@@ -27,6 +31,7 @@ private:
 	vector<unsigned int> indices;
 	vector<glm::vec3> positions; // vertex positions
 	vector<glm::vec3> normals;
+	Material material;
 
 	vector<float> transformToInterleavedData();
 	void bind();

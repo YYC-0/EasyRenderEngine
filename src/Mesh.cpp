@@ -71,8 +71,20 @@ void Mesh::createCube()
 	 bind();
 }
 
-void Mesh::draw()
+void Mesh::setMaterial(Material m)
 {
+	material = m;
+}
+
+void Mesh::draw(shared_ptr<Shader> shader)
+{
+	shader->setAttrVec3("material.ambient", material.ambient);
+	shader->setAttrVec3("material.diffuse", material.diffuse);
+	shader->setAttrVec3("material.specular", material.specular);
+	shader->setAttrF("material.shininess", material.shininess);
+
+	shader->use();
+
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);

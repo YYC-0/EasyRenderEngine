@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <glm/glm.hpp>
 
 #include "Camera.h"
 #include "Shader.h"
@@ -30,4 +31,8 @@ private:
 	void renderLoop();
 	void processInput();
 
+	// will be removed (move to main())
+	shared_ptr<Shader> lightingShader;
+	shared_ptr<Shader> lightCubeShader;
+	Mesh cube, lightCube;
 };
