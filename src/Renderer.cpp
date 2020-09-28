@@ -24,12 +24,11 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight, shared
 
 void Renderer::run()
 {
-    // build and compile our shader zprogram
+    // 该段以后修改（放至main()中）
     // ------------------------------------
     lightingShader = make_shared<Shader>("./shaders/materials.vs", "./shaders/materials.fs");
     lightCubeShader = make_shared<Shader>("./shaders/light_cube.vs", "./shaders/light_cube.fs");
-
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    // create cube
     cube.createCube();
     cube.setMaterial(
         Material(vec3(1.0, 0.5, 0.31),  // ambient
@@ -37,16 +36,19 @@ void Renderer::run()
             vec3(0.5, 0.5, 0.5),        // specular
             32.0)                       // shininess
     );
-    lightingShader->setAttrVec3("light.position", lightPos);
+    // create light
+    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+    pointLight = Light(lightPos);
 
-    glm::mat4 model = glm::mat4(1.0f);
-    lightingShader->setAttrMat4("model", model);    
-    model = glm::mat4(1.0f);
-    model = glm::translate(model, lightPos);
-    model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
-    lightCubeShader->setAttrMat4("model", model);
+    glm::mat4 modelMat = glm::mat4(1.0f);
+    lightingShader->setAttrMat4("model", modelMat);
+    modelMat = glm::mat4(1.0f);
+    modelMat = glm::translate(modelMat, lightPos);
+    modelMat = glm::scale(modelMat, glm::vec3(0.2f)); // a smaller cube
+    lightCubeShader->setAttrMat4("model", modelMat);
 
     lightCube.createCube();
+    //-------------------------------------------------
 
     // render loop
     // -----------
@@ -62,6 +64,7 @@ void Renderer::run()
         // -----
         processInput();
 
+        // set shader camera
         glm::mat4 projection = glm::perspective(glm::radians(camera->zoom), (float)window->getWidth() / (float)window->getHeight(), 0.1f, 100.0f);
         glm::mat4 view = camera->getViewMatrix();
         lightingShader->setAttrVec3("viewPos", camera->position);
@@ -69,6 +72,12 @@ void Renderer::run()
         lightingShader->setAttrMat4("view", view);
         lightCubeShader->setAttrMat4("projection", projection);
         lightCubeShader->setAttrMat4("view", view);
+
+        // set shader light
+        lightingShader->setAttrVec3("light.position", pointLight.getPos());
+        lightingShader->setAttrVec3("light.ambient", pointLight.getAmbient());
+        lightingShader->setAttrVec3("light.diffuse", pointLight.getDiffuse());
+        lightingShader->setAttrVec3("light.specular", pointLight.getSpecular());
 
         // render
         // ------
@@ -87,49 +96,20 @@ void Renderer::run()
 
 void Renderer::renderLoop()
 {
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-    // be sure to activate shader when setting uniforms/drawing objects
-    //lightingShader->use();
-    //lightingShader->setVec3("light.position", lightPos);
-    //lightingShader->setVec3("viewPos", camera->position);
-
     // light properties
     glm::vec3 lightColor;
     lightColor.x = sin(glfwGetTime() * 2.0f);
     lightColor.y = sin(glfwGetTime() * 0.7f);
     lightColor.z = sin(glfwGetTime() * 1.3f);
+    pointLight.setColor(lightColor);
     glm::vec3 diffuseColor = lightColor * glm::vec3(0.5f); // decrease the influence
     glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
-    lightingShader->setAttrVec3("light.ambient", ambientColor);
-    lightingShader->setAttrVec3("light.diffuse", diffuseColor);
-    lightingShader->setAttrVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+    //lightingShader->setAttrVec3("light.ambient", ambientColor);
+    //lightingShader->setAttrVec3("light.diffuse", diffuseColor);
+    //lightingShader->setAttrVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
 
-    // material properties
-    //lightingShader->setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-    //lightingShader->setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
-    //lightingShader->setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
-    //lightingShader->setFloat("material.shininess", 32.0f);
-
-    // view/projection transformations
-    //glm::mat4 projection = glm::perspective(glm::radians(camera->zoom), (float)window->getWidth() / (float)window->getHeight(), 0.1f, 100.0f);
-    //glm::mat4 view = camera->getViewMatrix();
-    //lightingShader->setMat4("projection", projection);
-    //lightingShader->setMat4("view", view);
-
-    // world transformation
-    //glm::mat4 model = glm::mat4(1.0f);
-    //lightingShader->setMat4("model", model);
 
     cube.draw(lightingShader);
-
-    // also draw the lamp object
-    //lightCubeShader->use();
-    //lightCubeShader->setMat4("projection", projection);
-    //lightCubeShader->setMat4("view", view);
-    //model = glm::mat4(1.0f);
-    //model = glm::translate(model, lightPos);
-    //model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
-    //lightCubeShader->setMat4("model", model);
 
     lightCube.draw(lightCubeShader);
 }

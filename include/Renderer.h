@@ -7,6 +7,7 @@
 #include "Shader.h"
 #include "Window.h"
 #include "Mesh.h"
+#include "Light.h"
 
 using namespace std;
 
@@ -35,4 +36,5 @@ private:
 	shared_ptr<Shader> lightingShader;
 	shared_ptr<Shader> lightCubeShader;
 	Mesh cube, lightCube;
+	Light pointLight;
 };
