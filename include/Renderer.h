@@ -35,6 +35,7 @@ private:
 	// will be removed (move to main())
 	shared_ptr<Shader> lightingShader;
 	shared_ptr<Shader> lightCubeShader;
-	Mesh cube, lightCube;
+	Mesh lightCube;
+	Cube cube;
 	Light pointLight;
 };
