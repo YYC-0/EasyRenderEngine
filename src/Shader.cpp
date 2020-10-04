@@ -9,7 +9,48 @@
 
 using namespace std;
 
-Shader::Shader(const GLchar *vertexPath, const GLchar *fragmentPath)
+Shader::Shader(string vertexPath_, string fragmentPath_)
+{
+	vertexPath = vertexPath_;
+	fragmentPath = fragmentPath_;
+}
+
+void Shader::setAttrB(const std::string & name, bool value)
+{
+	attributesBool[name] = value;
+}
+
+void Shader::setAttrI(const std::string & name, int value)
+{
+	attributesInt[name] = value;
+}
+
+void Shader::setAttrF(const std::string & name, float value)
+{
+	attributesFloat[name] = value;
+}
+
+void Shader::setAttrMat4(const std::string & name, const glm::mat4 & mat)
+{
+	attributesMat4[name] = mat;
+}
+
+void Shader::setAttrVec2(const std::string & name, const glm::vec2 & value)
+{
+	attributesVec2[name] = value;
+}
+
+void Shader::setAttrVec3(const std::string & name, const glm::vec3 & value)
+{
+	attributesVec3[name] = value;
+}
+
+void Shader::setAttrVec4(const std::string & name, const glm::vec4 & value)
+{
+	attributesVec4[name] = value;
+}
+
+void Shader::compile()
 {
 	// 1. 从文件路径中获取顶点/片段着色器
 	string vertexCode;
@@ -22,8 +63,8 @@ Shader::Shader(const GLchar *vertexPath, const GLchar *fragmentPath)
 	fShaderFile.exceptions(ifstream::failbit | ifstream::badbit);
 	try
 	{
-		vShaderFile.open(vertexPath);
-		fShaderFile.open(fragmentPath);
+		vShaderFile.open(vertexPath.c_str());
+		fShaderFile.open(fragmentPath.c_str());
 		// 读取文件的缓冲内容到数据流中
 		stringstream vShaderStream, fShaderStream;
 		vShaderStream << vShaderFile.rdbuf();
@@ -84,41 +125,6 @@ Shader::Shader(const GLchar *vertexPath, const GLchar *fragmentPath)
 	// 删除着色器
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
-}
-
-void Shader::setAttrB(const std::string & name, bool value)
-{
-	attributesBool[name] = value;
-}
-
-void Shader::setAttrI(const std::string & name, int value)
-{
-	attributesInt[name] = value;
-}
-
-void Shader::setAttrF(const std::string & name, float value)
-{
-	attributesFloat[name] = value;
-}
-
-void Shader::setAttrMat4(const std::string & name, const glm::mat4 & mat)
-{
-	attributesMat4[name] = mat;
-}
-
-void Shader::setAttrVec2(const std::string & name, const glm::vec2 & value)
-{
-	attributesVec2[name] = value;
-}
-
-void Shader::setAttrVec3(const std::string & name, const glm::vec3 & value)
-{
-	attributesVec3[name] = value;
-}
-
-void Shader::setAttrVec4(const std::string & name, const glm::vec4 & value)
-{
-	attributesVec4[name] = value;
 }
 
 void Shader::use()

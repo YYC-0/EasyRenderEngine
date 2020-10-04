@@ -77,6 +77,7 @@ void Mesh::setMaterial(Material m)
 
 void Mesh::draw(shared_ptr<Shader> shader)
 {
+	shader->setAttrMat4("model", transformMat);
 	shader->setAttrVec3("material.ambient", material.ambient);
 	shader->setAttrVec3("material.diffuse", material.diffuse);
 	shader->setAttrVec3("material.specular", material.specular);

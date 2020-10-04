@@ -11,8 +11,9 @@ public:
 	unsigned int ID; // 程序ID
 
 	// 从文件路径中获取顶点/片段着色器 并编译
-	Shader(const GLchar *vertexPath, const GLchar *fragmentPath);
+	Shader(std::string vertexPath, std::string fragmentPath);
 
+	void compile();
 	void use();
 
 	void setAttrB(const std::string &name, bool value);
@@ -24,6 +25,8 @@ public:
 	void setAttrVec4(const std::string &name, const glm::vec4 &value);
 
 private:
+	std::string vertexPath;
+	std::string fragmentPath;
 	void setBool(const std::string &name, bool value) const;
 	void setInt(const std::string &name, int value) const;
 	void setFloat(const std::string &name, float value) const;

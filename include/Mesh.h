@@ -22,6 +22,7 @@ public:
 	unsigned int getVAO() { return VAO; }
 	mat4 getTransMat() { return transformMat; }
 	void setPosition(glm::vec3 pos);
+	void bind();
 
 protected:
 	unsigned int VAO;
@@ -41,7 +42,6 @@ protected:
 	Material material;
 
 	vector<float> transformToInterleavedData();
-	void bind();
 };
 
 class Cube : public Mesh
