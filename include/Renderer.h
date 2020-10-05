@@ -48,5 +48,4 @@ private:
 	shared_ptr<Shader> lightCubeShader;
 	//Mesh lightCube;
 	Cube lightCube;
-	Light pointLight;
 };

@@ -37,7 +37,6 @@ void Renderer::run()
     lightCube.init();
     // create light
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-    pointLight = Light(lightPos);
 
 
     //-------------------------------------------------
@@ -68,10 +67,11 @@ void Renderer::run()
         // set shader light
         for (auto light : lights)
         {
-            shader->setAttrVec3("light.position", light.second->getPos());
-            shader->setAttrVec3("light.ambient", light.second->getAmbient());
-            shader->setAttrVec3("light.diffuse", light.second->getDiffuse());
-            shader->setAttrVec3("light.specular", light.second->getSpecular());
+            if (light.second->getType() == LightType::Point)
+                shader->setAttrI("light.type", 0);
+            else if (light.second->getType() == LightType::Directional)
+                shader->setAttrI("light.type", 1);
+            light.second->setShaderAttr(shader);
         }
         lightCubeShader->setAttrMat4("model", lightCube.getTransMat());
 

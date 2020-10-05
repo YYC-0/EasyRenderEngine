@@ -26,7 +26,7 @@ public:
         // create camera
         camera = make_shared<Camera>(glm::vec3(0.0f, 0.0f, 3.0f));
         // create meshes
-        lightPos = vec3(1.2f, 1.0f, 2.0f);
+        lightDir = vec3(-1.0,-1.0, 1.0);
         cube = make_shared<Cube>(2.0, 1.0, 1.0);
         cube->setMaterial(
             Material(vec3(1.0, 0.5, 0.31),  // ambient
@@ -42,7 +42,7 @@ public:
                 32.0)                       // shininess
         );
         // create light
-        light = make_shared<Light>(lightPos);
+        light = make_shared<DirectionalLight>(lightDir);
         // create shader    
         shader = make_shared<Shader>("./shaders/materials.vs", "./shaders/materials.fs");
 
@@ -75,11 +75,11 @@ public:
     }
 
 private:
-    vec3 lightPos;
+    vec3 lightDir;
     shared_ptr<Camera> camera;
     shared_ptr<Cube> cube;
     shared_ptr<Cube> plane;
-    shared_ptr<Light> light;
+    shared_ptr<DirectionalLight> light;
     shared_ptr<Shader> shader;
 };
 
