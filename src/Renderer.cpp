@@ -7,6 +7,7 @@ Renderer::Renderer() :
     glfwWindow(nullptr),
     deltaTime(0.0f),
     lastFrame(0.0f),
+    clearColor(vec3(0, 0, 0)),
     lightCube(0.1,0.1,0.1, vec3(1.2, 1.0, 2.0))
 {
 }
@@ -16,12 +17,11 @@ Renderer::~Renderer()
 {
 }
 
-void Renderer::init(string windowName, int windowWidth, int windowHeight, shared_ptr<Camera> camera_)
+void Renderer::init(string windowName, int windowWidth, int windowHeight)
 {
     window = make_shared<Window>(windowName, windowWidth, windowHeight);
-	window->setCamera(camera_);
+	window->setCamera(camera);
     glfwWindow = window->getGLFWWindow();
-	camera = camera_;
 
     addResources();
     shader->compile();
@@ -32,7 +32,7 @@ void Renderer::run()
     // 该段以后修改（放至main()中）
     // ------------------------------------
     //shader = make_shared<Shader>("./shaders/materials.vs", "./shaders/materials.fs");
-    lightCubeShader = make_shared<Shader>("./shaders/light_cube.vs", "./shaders/light_cube.fs");
+    lightCubeShader = make_shared<Shader>("./shaders/light_cube.vert", "./shaders/light_cube.frag");
     // create cube
     lightCube.init();
     // create light
@@ -65,19 +65,17 @@ void Renderer::run()
         lightCubeShader->setAttrMat4("view", view);
 
         // set shader light
+        shader->setAttrI("lightNum", lights.size());
+        int n = 0;
         for (auto light : lights)
         {
-            if (light.second->getType() == LightType::Point)
-                shader->setAttrI("light.type", 0);
-            else if (light.second->getType() == LightType::Directional)
-                shader->setAttrI("light.type", 1);
-            light.second->setShaderAttr(shader);
+            light.second->setShaderAttr(shader, n++);
         }
         lightCubeShader->setAttrMat4("model", lightCube.getTransMat());
-
+        
         // render
         // ------
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         renderLoop();
@@ -86,6 +84,8 @@ void Renderer::run()
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(glfwWindow);
         glfwPollEvents();
+
+        cout << "FPS: " << 1.0 / deltaTime << '\r';
     }
 
 }
@@ -123,6 +123,16 @@ void Renderer::addLight(string lightName, shared_ptr<Light> light)
 void Renderer::addShader(shared_ptr<Shader> shader_)
 {
     shader = shader_;
+}
+
+void Renderer::setClearColor(vec3 color)
+{
+    clearColor = color;
+}
+
+void Renderer::setCamera(shared_ptr<Camera> camera_)
+{
+    camera = camera_;
 }
 
 void Renderer::renderLoop()

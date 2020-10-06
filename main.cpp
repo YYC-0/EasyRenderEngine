@@ -14,10 +14,6 @@
 #include <memory>
 using namespace std;
 
-// settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
-
 class myRenderer : public Renderer
 {
 public:
@@ -42,19 +38,25 @@ public:
                 32.0)                       // shininess
         );
         // create light
-        light = make_shared<DirectionalLight>(lightDir);
+        directionalLight = make_shared<DirectionalLight>(lightDir);
+        pointLight = make_shared<PointLight>(vec3(-3, 5, 0));
         // create shader    
-        shader = make_shared<Shader>("./shaders/materials.vs", "./shaders/materials.fs");
+        shader = make_shared<Shader>("./shaders/materials.vert", "./shaders/materials.frag");
+
+        // setting
+        setClearColor(vec3(0.1, 0.1, 0.1));
+        setCamera(camera);
 
         // initalize window
-        init("test", SCR_WIDTH, SCR_HEIGHT, camera);
+        init("myEngine", 800, 600);
     }
 
     virtual void addResources()
     {
         addMesh("cube", cube);
         addMesh("plain", plane);
-        addLight("pointLight", light);
+        addLight("directionalLight", directionalLight);
+        addLight("pointLight", pointLight);
         addShader(shader);
     }
 
@@ -65,7 +67,7 @@ public:
         lightColor.x = sin(glfwGetTime() * 2.0f);
         lightColor.y = sin(glfwGetTime() * 0.7f);
         lightColor.z = sin(glfwGetTime() * 1.3f);
-        light->setColor(lightColor);
+        pointLight->setColor(lightColor);
 
         vec3 pos(0.0, sin(glfwGetTime()), 0.0);
         cube->setPosition(pos);
@@ -79,7 +81,8 @@ private:
     shared_ptr<Camera> camera;
     shared_ptr<Cube> cube;
     shared_ptr<Cube> plane;
-    shared_ptr<DirectionalLight> light;
+    shared_ptr<DirectionalLight> directionalLight;
+    shared_ptr<PointLight> pointLight;
     shared_ptr<Shader> shader;
 };
 

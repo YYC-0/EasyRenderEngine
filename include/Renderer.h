@@ -17,17 +17,19 @@ public:
 	Renderer();
 	~Renderer();
 
-	void init(string windowName, int windowWidth, int windowHeight, shared_ptr<Camera> camera_);
+	void init(string windowName, int windowWidth, int windowHeight);
 	void run();
 	virtual void addResources();
 
-protected:
 	virtual void renderLoop();
-	void processInput();
+	virtual void processInput();
 
 	void addMesh(string meshName, shared_ptr<Mesh> mesh);
 	void addLight(string lightName, shared_ptr<Light> light);
 	void addShader(shared_ptr<Shader> shader_); // ´ýÐÞ¸Ä
+
+	void setClearColor(vec3 color);
+	void setCamera(shared_ptr<Camera> camera_);
 
 private:
 	shared_ptr<Window> window;
@@ -42,6 +44,7 @@ private:
 	map<string, shared_ptr<Mesh>> meshes;
 	map<string, shared_ptr<Light>> lights;
 
+	vec3 clearColor;
 
 	// will be removed (move to main())
 	shared_ptr<Shader> shader;

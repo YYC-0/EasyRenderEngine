@@ -23,7 +23,7 @@ public:
 	vec3 getDiffuse() { return diffuseStrength; }
 	vec3 getSpecular() { return specularStrength; }
 	LightType getType() { return type; }
-	virtual void setShaderAttr(std::shared_ptr<Shader> shader) = 0; // 设置shader所需的变量
+	virtual void setShaderAttr(std::shared_ptr<Shader> shader, int lightNum) = 0; // 设置shader所需的变量
 
 protected:
 	vec3 lightColor;
@@ -46,7 +46,7 @@ public:
 
 	void setPosition(vec3 pos);
 	vec3 getPos() { return position; }
-	virtual void setShaderAttr(std::shared_ptr<Shader> shader);
+	virtual void setShaderAttr(std::shared_ptr<Shader> shader, int lightNum);
 
 private:
 	vec3 position;
@@ -61,7 +61,7 @@ public:
 
 	void setDir(vec3 dir);
 	vec3 getDir() { return direction; }
-	virtual void setShaderAttr(std::shared_ptr<Shader> shader);
+	virtual void setShaderAttr(std::shared_ptr<Shader> shader, int lightNum);
 
 private:
 	vec3 direction;

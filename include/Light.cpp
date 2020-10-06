@@ -40,12 +40,14 @@ void PointLight::setPosition(vec3 pos)
 	position = pos;
 }
 
-void PointLight::setShaderAttr(std::shared_ptr<Shader> shader)
+void PointLight::setShaderAttr(std::shared_ptr<Shader> shader, int lightNum)
 {
-	shader->setAttrVec3("light.position", position);
-	shader->setAttrVec3("light.ambient", ambientStrength);
-	shader->setAttrVec3("light.diffuse", diffuseStrength);
-	shader->setAttrVec3("light.specular", specularStrength);
+	std::string pre = "lights[" + std::to_string(lightNum) + "].";
+	shader->setAttrI(pre + "type", 0);
+	shader->setAttrVec3(pre + "position", position);
+	shader->setAttrVec3(pre + "ambient", ambientStrength);
+	shader->setAttrVec3(pre + "diffuse", diffuseStrength);
+	shader->setAttrVec3(pre + "specular", specularStrength);
 }
 
 DirectionalLight::DirectionalLight()
@@ -68,10 +70,12 @@ void DirectionalLight::setDir(vec3 dir)
 	direction = dir;
 }
 
-void DirectionalLight::setShaderAttr(std::shared_ptr<Shader> shader)
+void DirectionalLight::setShaderAttr(std::shared_ptr<Shader> shader, int lightNum)
 {
-	shader->setAttrVec3("light.direction", direction);
-	shader->setAttrVec3("light.ambient", ambientStrength);
-	shader->setAttrVec3("light.diffuse", diffuseStrength);
-	shader->setAttrVec3("light.specular", specularStrength);
+	std::string pre = "lights[" + std::to_string(lightNum) + "].";
+	shader->setAttrI(pre + "type", 1);
+	shader->setAttrVec3(pre + "direction", direction);
+	shader->setAttrVec3(pre + "ambient", ambientStrength);
+	shader->setAttrVec3(pre + "diffuse", diffuseStrength);
+	shader->setAttrVec3(pre + "specular", specularStrength);
 }
