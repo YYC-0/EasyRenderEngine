@@ -37,6 +37,17 @@ public:
                 vec3(0.5, 0.5, 0.5),        // specular
                 32.0)                       // shininess
         );
+        model = make_shared<Model>();
+        //model->loadObj("./models/spider/spider.obj");
+        //model->setScale({ 0.01,0.01,0.01 });
+        model->loadObj("./models/suzanne/suzanne.obj");
+        model->setPosition({ 0, 1, 0 });
+        model->setMaterial(
+            Material(vec3(1.0, 0.5, 0.31),  // ambient
+                vec3(1.0, 0.5, 0.31),       // diffuse
+                vec3(0.5, 0.5, 0.5),        // specular
+                32.0)                       // shininess
+        );
         // create light
         directionalLight = make_shared<DirectionalLight>(lightDir);
         pointLight = make_shared<PointLight>(vec3(-3, 5, 0));
@@ -48,13 +59,14 @@ public:
         setCamera(camera);
 
         // initalize window
-        init("myEngine", 800, 600);
+        init("TEST", 800, 600);
     }
 
     virtual void addResources()
     {
-        addMesh("cube", cube);
-        addMesh("plain", plane);
+        //addObject("cube", cube);
+        addObject("plain", plane);
+        addObject("model", model);
         addLight("directionalLight", directionalLight);
         addLight("pointLight", pointLight);
         addShader(shader);
@@ -64,16 +76,17 @@ public:
     {
         // light properties
         glm::vec3 lightColor(1.0);
-        lightColor.x = sin(glfwGetTime() * 2.0f);
-        lightColor.y = sin(glfwGetTime() * 0.7f);
-        lightColor.z = sin(glfwGetTime() * 1.3f);
+        //lightColor.x = sin(glfwGetTime() * 2.0f);
+        //lightColor.y = sin(glfwGetTime() * 0.7f);
+        //lightColor.z = sin(glfwGetTime() * 1.3f);
         pointLight->setColor(lightColor);
 
         vec3 pos(0.0, sin(glfwGetTime()), 0.0);
-        cube->setPosition(pos);
+       // cube->setPosition(pos);
 
-        cube->draw(shader);
+        //cube->draw(shader);
         plane->draw(shader);
+        model->draw(shader);
     }
 
 private:
@@ -84,6 +97,8 @@ private:
     shared_ptr<DirectionalLight> directionalLight;
     shared_ptr<PointLight> pointLight;
     shared_ptr<Shader> shader;
+
+    shared_ptr<Model> model;
 };
 
 int main()

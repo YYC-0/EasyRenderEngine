@@ -24,7 +24,7 @@ public:
 	virtual void renderLoop();
 	virtual void processInput();
 
-	void addMesh(string meshName, shared_ptr<Mesh> mesh);
+	void addObject(string meshName, shared_ptr<Object> mesh);
 	void addLight(string lightName, shared_ptr<Light> light);
 	void addShader(shared_ptr<Shader> shader_); // ´ýÐÞ¸Ä
 
@@ -41,7 +41,7 @@ private:
 
 	// Resources
 	shared_ptr<Camera> camera;
-	map<string, shared_ptr<Mesh>> meshes;
+	map<string, shared_ptr<Object>> meshes;
 	map<string, shared_ptr<Light>> lights;
 
 	vec3 clearColor;
@@ -49,6 +49,6 @@ private:
 	// will be removed (move to main())
 	shared_ptr<Shader> shader;
 	shared_ptr<Shader> lightCubeShader;
-	//Mesh lightCube;
+	//Object lightCube;
 	Cube lightCube;
 };

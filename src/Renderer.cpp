@@ -94,13 +94,13 @@ void Renderer::addResources()
 {
 }
 
-void Renderer::addMesh(string meshName, shared_ptr<Mesh> mesh)
+void Renderer::addObject(string meshName, shared_ptr<Object> mesh)
 {
     auto iter = meshes.find(meshName);
     // mesh name already exists
     if (iter != meshes.end())
     {
-        cout << " Add Mesh Failed!\tMesh name \"" << meshName << "\" already exists!" << endl;
+        cout << "Add Object Failed! Object name \"" << meshName << "\" already exists!" << endl;
         return;
     }
 
@@ -114,7 +114,7 @@ void Renderer::addLight(string lightName, shared_ptr<Light> light)
     // light name already exists
     if (iter != lights.end())
     {
-        cout << " Add Light Failed!\tLight name \"" << lightName << "\" already exists!" << endl;
+        cout << "Add Light Failed! Light name \"" << lightName << "\" already exists!" << endl;
         return;
     }
     lights[lightName] = light;
