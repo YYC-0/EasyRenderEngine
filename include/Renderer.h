@@ -2,6 +2,8 @@
 #include <string>
 #include <memory>
 #include <glm/glm.hpp>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 #include "Camera.h"
 #include "Shader.h"

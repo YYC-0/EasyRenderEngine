@@ -8,7 +8,7 @@
 using namespace glm;
 
 Object::Object() :
-	vertexNum(0),
+	drawVertexNum(0),
 	faceNum(0),
 	position(vec3(0, 0, 0)),
 	scale(vec3(1.0, 1.0, 1.0)),
@@ -23,24 +23,16 @@ Object::~Object()
 	glDeleteBuffers(1, &EBO);
 }
 
-void Object::setMaterial(Material m)
+void Object::setMaterial(Material m) // ´ýÐÞ¸Ä
 {
-	material = m;
+	if (material.empty())
+		material.push_back(m);
+	else
+		material[0] = m;
 }
 
 void Object::draw(shared_ptr<Shader> shader)
 {
-	shader->setAttrMat4("model", transformMat);
-	shader->setAttrVec3("material.ambient", material.ambient);
-	shader->setAttrVec3("material.diffuse", material.diffuse);
-	shader->setAttrVec3("material.specular", material.specular);
-	shader->setAttrF("material.shininess", material.shininess);
-
-	shader->use();
-
-	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
 }
 
 void Object::setPosition(glm::vec3 pos)
@@ -70,6 +62,8 @@ vector<float> Object::transformToInterleavedData()
 		interleavedData.push_back(normals[i].x);
 		interleavedData.push_back(normals[i].y);
 		interleavedData.push_back(normals[i].z);
+		interleavedData.push_back(texCoords[i].x);
+		interleavedData.push_back(texCoords[i].y);
 	}
 	return interleavedData;
 }
@@ -94,6 +88,8 @@ void Object::bind()
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void *)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void *)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
 
 	glBindVertexArray(0);
 }
@@ -112,6 +108,49 @@ Cube::Cube(float length_, float width_, float height_, vec3 pos) :
 void Cube::init()
 {
 	bind();
+}
+
+void Cube::draw(shared_ptr<Shader> shader)
+{
+	for (int i = 0; i < material.size(); ++i)
+	{
+		shader->setAttrMat4("model", transformMat);
+
+		shader->setAttrVec3("material.ambient", material[i].ambient);
+		shader->setAttrVec3("material.diffuse", material[i].diffuse);
+		shader->setAttrVec3("material.specular", material[i].specular);
+		shader->setAttrF("shininess", material[i].shininess);
+		shader->setAttrB("useDiffuseMap", material[i].useDiffuseMap);
+		shader->setAttrB("useSpecularMap", material[i].useSpecularMap);
+		shader->setAttrB("useNormalMap", material[i].useNormalMap);
+
+		shader->use();
+
+
+		// texture
+		if (material[i].useDiffuseMap)
+		{
+			glActiveTexture(GL_TEXTURE0);
+			shader->setAttrI("Texture.diffuse", 0);
+			glBindTexture(GL_TEXTURE_2D, material[i].diffuseMap.getID());
+		}
+		if (material[i].useNormalMap)
+		{
+			glActiveTexture(GL_TEXTURE1);
+			shader->setAttrI("Texture.normal", 1);
+			glBindTexture(GL_TEXTURE_2D, material[i].normalMap.getID());
+		}
+		if (material[i].useSpecularMap)
+		{
+			glActiveTexture(GL_TEXTURE2);
+			shader->setAttrI("Texture.specular", 2);
+			glBindTexture(GL_TEXTURE_2D, material[i].specularMap.getID());
+		}
+
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, drawVertexNum, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+	}
 }
 
 void Cube::create()
@@ -162,7 +201,17 @@ void Cube::create()
 		vec3{0, 1, 0}, vec3{0, 1, 0}, vec3{0, 1, 0}, vec3{0, 1, 0},
 		vec3{0, -1, 0},  vec3{0, -1, 0}, vec3{0, -1, 0}, vec3{0, -1, 0},
 	};
-	vertexNum = vertices.size();
+
+	texCoords = vector<vec2>{
+		vec2{1,1}, vec2{0,1}, vec2{0,0},vec2{1,0},
+		vec2{1,1}, vec2{0,1}, vec2{0,0},vec2{1,0},
+		vec2{1,1}, vec2{0,1}, vec2{0,0},vec2{1,0},
+		vec2{1,1}, vec2{0,1}, vec2{0,0},vec2{1,0},
+		vec2{1,1}, vec2{0,1}, vec2{0,0},vec2{1,0},
+		vec2{1,1}, vec2{0,1}, vec2{0,0},vec2{1,0}
+	};
+
+	drawVertexNum = indices.size();
 	faceNum = indices.size() / 3;
 }
 
@@ -285,7 +334,7 @@ void Model::loadObj(string path)
 			Face f = facesGroupsIdx_[i][j];
 			for (int k = 0; k < 3; ++k)
 			{
-				vertexNum++;
+				drawVertexNum++;
 				indices.push_back(f[k].posIdx);
 				normals[f[k].posIdx] = normals_[f[k].nIdx];
 				texCoords[f[k].posIdx] = texCoords_[f[k].texIdx];
@@ -294,18 +343,47 @@ void Model::loadObj(string path)
 		}
 	}
 }
-
+ 
 void Model::draw(shared_ptr<Shader> shader)
 {
-	shader->setAttrMat4("model", transformMat);
-	shader->setAttrVec3("material.ambient", material.ambient);
-	shader->setAttrVec3("material.diffuse", material.diffuse);
-	shader->setAttrVec3("material.specular", material.specular);
-	shader->setAttrF("material.shininess", material.shininess);
+	for (int i = 0; i < material.size(); ++i)
+	{
+		shader->setAttrMat4("model", transformMat);
 
-	shader->use();
+		shader->setAttrVec3("material.ambient", material[i].ambient);
+		shader->setAttrVec3("material.diffuse", material[i].diffuse);
+		shader->setAttrVec3("material.specular", material[i].specular);
+		shader->setAttrF("shininess", material[i].shininess);
+		shader->setAttrB("useDiffuseMap", material[i].useDiffuseMap);
+		shader->setAttrB("useSpecularMap", material[i].useSpecularMap);
+		shader->setAttrB("useNormalMap", material[i].useNormalMap);
 
-	glBindVertexArray(VAO);
-	glDrawElements(GL_TRIANGLES, vertexNum, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
+		shader->use();
+
+		
+		// texture
+		if (material[i].useDiffuseMap)
+		{
+			glActiveTexture(GL_TEXTURE0);
+			shader->setAttrI("Texture.diffuse", 0);
+			glBindTexture(GL_TEXTURE_2D, material[i].diffuseMap.getID());
+		}
+		if (material[i].useNormalMap)
+		{
+			glActiveTexture(GL_TEXTURE1);
+			shader->setAttrI("Texture.normal", 1);
+			glBindTexture(GL_TEXTURE_2D, material[i].normalMap.getID());
+		}
+		if (material[i].useSpecularMap)
+		{
+			glActiveTexture(GL_TEXTURE2);
+			shader->setAttrI("Texture.specular", 2);
+			glBindTexture(GL_TEXTURE_2D, material[i].specularMap.getID());
+		}
+
+		glBindVertexArray(VAO);
+		//glDrawElements(GL_TRIANGLES, drawVertexNum, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, drawVertexNum, GL_UNSIGNED_INT, indices.data());
+		glBindVertexArray(0);
+	}
 }

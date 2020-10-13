@@ -20,11 +20,8 @@ Renderer::~Renderer()
 void Renderer::init(string windowName, int windowWidth, int windowHeight)
 {
     window = make_shared<Window>(windowName, windowWidth, windowHeight);
-	window->setCamera(camera);
+	//window->setCamera(camera);
     glfwWindow = window->getGLFWWindow();
-
-    addResources();
-    shader->compile();
 }
 
 void Renderer::run()
@@ -40,6 +37,9 @@ void Renderer::run()
 
 
     //-------------------------------------------------
+
+    addResources();
+    shader->compile();
 
     // render loop
     // -----------
@@ -94,6 +94,7 @@ void Renderer::addResources()
 {
 }
 
+
 void Renderer::addObject(string meshName, shared_ptr<Object> mesh)
 {
     auto iter = meshes.find(meshName);
@@ -133,6 +134,7 @@ void Renderer::setClearColor(vec3 color)
 void Renderer::setCamera(shared_ptr<Camera> camera_)
 {
     camera = camera_;
+    window->setCamera(camera);
 }
 
 void Renderer::renderLoop()

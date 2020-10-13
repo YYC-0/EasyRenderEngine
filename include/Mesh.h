@@ -17,6 +17,7 @@ struct VertexIndex
 	int nIdx;	// normal index
 };
 typedef vector<VertexIndex> Face;
+
 class Object
 {
 public:
@@ -46,16 +47,17 @@ protected:
 	mat4 rotation; // »¹Î´Ìí¼Ó
 	mat4 transformMat;
 
-	int vertexNum;
+	int drawVertexNum;
 	int faceNum;
 	vector<unsigned int> indices;
 	vector<vector<Face>> facesGroupsIdx; // faces groups indices
 	vector<glm::vec3> vertices; // vertex positions
 	vector<glm::vec3> normals;
 	vector<glm::vec2> texCoords;
-	Material material;
+	vector<Material> material;
 
 	vector<float> transformToInterleavedData();
+
 };
 
 class Cube : public Object
@@ -63,6 +65,7 @@ class Cube : public Object
 public:
 	Cube(float length_ = 1.0f, float width_ = 1.0f, float height_ = 1.0f, vec3 pos = { 0,0,0 });
 	void init(); // bind data, should be called in your constructor
+	virtual void draw(shared_ptr<Shader> shader);
 
 private:
 	float length;
@@ -82,5 +85,6 @@ public:
 	virtual void draw(shared_ptr<Shader> shader);
 
 private:
+	void loadMaterialLib();
 	
 };
