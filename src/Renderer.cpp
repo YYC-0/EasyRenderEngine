@@ -31,7 +31,7 @@ void Renderer::run()
     //shader = make_shared<Shader>("./shaders/materials.vs", "./shaders/materials.fs");
     lightCubeShader = make_shared<Shader>("./shaders/light_cube.vert", "./shaders/light_cube.frag");
     // create cube
-    lightCube.init();
+    lightCube.bind();
     // create light
     glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 

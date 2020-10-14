@@ -74,3 +74,14 @@ void Material::loadTexture(std::string path, TextureType type)
 		break;
 	}
 }
+
+void Material::init()
+{
+	ambient = vec3(1.0);
+	diffuse = vec3(1.0);
+	specular = vec3(0.5);
+	shininess = 32.0;
+	useDiffuseMap = false;
+	useNormalMap = false;
+	useSpecularMap = false;
+}

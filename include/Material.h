@@ -33,6 +33,7 @@ public:
 		useDiffuseMap(false), useNormalMap(false), useSpecularMap(false) {}
 
 	void loadTexture(std::string path, TextureType type);
+	void init();
 
 	bool useDiffuseMap;
 	bool useNormalMap;

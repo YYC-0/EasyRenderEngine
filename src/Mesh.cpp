@@ -18,17 +18,19 @@ Object::Object() :
 
 Object::~Object()
 {
-	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
+	for (int i = 0; i < VAOs.size(); ++i)
+		glDeleteVertexArrays(1, &VAOs[i]);
+	for (int i = 0; i < EBOs.size(); ++i)
+		glDeleteBuffers(1, &EBOs[i]);
 }
 
 void Object::setMaterial(Material m) // 待修改
 {
-	if (material.empty())
-		material.push_back(m);
+	if (materials.empty())
+		materials.push_back(m);
 	else
-		material[0] = m;
+		materials[0] = m;
 }
 
 void Object::draw(shared_ptr<Shader> shader)
@@ -71,29 +73,38 @@ vector<float> Object::transformToInterleavedData()
 void Object::bind()
 {
 	vector<float> interleavedData = transformToInterleavedData();
-	glGenVertexArrays(1, &VAO);
+
 	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-
-	glBindVertexArray(VAO);
-
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, interleavedData.size() * sizeof(float), interleavedData.data(), GL_STATIC_DRAW);
+	
+	for (int i = 0; i < indices.size(); ++i)
+	{
+		unsigned int vao, ebo;
+		glGenVertexArrays(1, &vao);
+		glGenBuffers(1, &ebo);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+		glBindVertexArray(vao);
 
-	int stride = interleavedData.size() / vertices.size() * sizeof(float);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void *)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void *)(6 * sizeof(float)));
-	glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices[i].size() * sizeof(unsigned int), indices[i].data(), GL_STATIC_DRAW);
 
-	glBindVertexArray(0);
+		int stride = interleavedData.size() / vertices.size() * sizeof(float);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, (void*)0);
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, (void *)(3 * sizeof(float)));
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void *)(6 * sizeof(float)));
+		glEnableVertexAttribArray(2);
+
+		glBindVertexArray(0);
+
+		VAOs.push_back(vao);
+		EBOs.push_back(ebo);
+	}
 }
 
+// Cube ---------------------------------------------------------------------
 Cube::Cube(float length_, float width_, float height_, vec3 pos) :
 	length(length_), width(width_), height(height_)
 {	
@@ -105,50 +116,47 @@ Cube::Cube(float length_, float width_, float height_, vec3 pos) :
 	create();
 }
 
-void Cube::init()
-{
-	bind();
-}
 
 void Cube::draw(shared_ptr<Shader> shader)
 {
-	for (int i = 0; i < material.size(); ++i)
+	for (int i = 0; i < indices.size(); ++i)
 	{
 		shader->setAttrMat4("model", transformMat);
 
-		shader->setAttrVec3("material.ambient", material[i].ambient);
-		shader->setAttrVec3("material.diffuse", material[i].diffuse);
-		shader->setAttrVec3("material.specular", material[i].specular);
-		shader->setAttrF("shininess", material[i].shininess);
-		shader->setAttrB("useDiffuseMap", material[i].useDiffuseMap);
-		shader->setAttrB("useSpecularMap", material[i].useSpecularMap);
-		shader->setAttrB("useNormalMap", material[i].useNormalMap);
+		shader->setAttrVec3("material.ambient", materials[i].ambient);
+		shader->setAttrVec3("material.diffuse", materials[i].diffuse);
+		shader->setAttrVec3("material.specular", materials[i].specular);
+		shader->setAttrF("shininess", materials[i].shininess);
+		shader->setAttrB("useDiffuseMap", materials[i].useDiffuseMap);
+		shader->setAttrB("useSpecularMap", materials[i].useSpecularMap);
+		shader->setAttrB("useNormalMap", materials[i].useNormalMap);
+
+		shader->setAttrI("textures.diffuse", 0);
+		shader->setAttrI("textures.normal", 1);
+		shader->setAttrI("textures.specular", 2);
 
 		shader->use();
 
 
 		// texture
-		if (material[i].useDiffuseMap)
+		if (materials[i].useDiffuseMap)
 		{
 			glActiveTexture(GL_TEXTURE0);
-			shader->setAttrI("Texture.diffuse", 0);
-			glBindTexture(GL_TEXTURE_2D, material[i].diffuseMap.getID());
+			glBindTexture(GL_TEXTURE_2D, materials[i].diffuseMap.getID());
 		}
-		if (material[i].useNormalMap)
+		if (materials[i].useNormalMap)
 		{
 			glActiveTexture(GL_TEXTURE1);
-			shader->setAttrI("Texture.normal", 1);
-			glBindTexture(GL_TEXTURE_2D, material[i].normalMap.getID());
+			glBindTexture(GL_TEXTURE_2D, materials[i].normalMap.getID());
 		}
-		if (material[i].useSpecularMap)
+		if (materials[i].useSpecularMap)
 		{
 			glActiveTexture(GL_TEXTURE2);
-			shader->setAttrI("Texture.specular", 2);
-			glBindTexture(GL_TEXTURE_2D, material[i].specularMap.getID());
+			glBindTexture(GL_TEXTURE_2D, materials[i].specularMap.getID());
 		}
 
-		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, drawVertexNum, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(VAOs[i]);
+		glDrawElements(GL_TRIANGLES, indices[i].size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 	}
 }
@@ -184,14 +192,14 @@ void Cube::create()
 	};
 
 	// 每个三角形顶点的索引
-	indices = vector<unsigned int>{
+	indices.push_back(vector<unsigned int>{
 		0,1,2, 0,2,3,
 		4,5,6, 4,6,7,
 		8,9,10, 8,10,11,
 		12,13,14, 12, 14,15,
 		16,17,18, 16,18,19,
 		20,21,22, 20,22,23
-	};
+	});
 
 	normals = vector<vec3>{
 		vec3{0, 0, 1}, vec3{0, 0, 1}, vec3{0, 0, 1}, vec3{0, 0, 1},
@@ -211,10 +219,10 @@ void Cube::create()
 		vec2{1,1}, vec2{0,1}, vec2{0,0},vec2{1,0}
 	};
 
-	drawVertexNum = indices.size();
 	faceNum = indices.size() / 3;
 }
 
+// Model ---------------------------------------------------------------------
 Model::Model(vec3 position_, vec3 scale_) :
 	Object()
 {
@@ -242,7 +250,6 @@ void Model::loadObj(string path)
 	texCoords_.push_back(vec2());
 	normals_.push_back(vec3());
 	vector<vector<Face>> facesGroupsIdx_;
-	vector<string> mtls_;
 	vector<Face> faces;
 	string line;
 	while (!in.eof())
@@ -312,11 +319,20 @@ void Model::loadObj(string path)
 		}
 		else if (tokens[0] == "usemtl") // material
 		{
-			mtls_.push_back(tokens[1]);
+			materialName.push_back(tokens[1]);
 			if (!faces.empty())
 			{
 				facesGroupsIdx_.push_back(faces);
 				faces.clear();
+			}
+		}
+		else if (tokens[0] == "mtllib")
+		{
+			size_t pos = path.find_last_of("/");
+			if (pos != string::npos)
+			{
+				string mtllibPath = path.substr(0, pos + 1) + tokens[1];
+				loadMaterialLib(mtllibPath);
 			}
 		}
 	}
@@ -326,64 +342,160 @@ void Model::loadObj(string path)
 	// 转换格式
 	vertices = vertices_;
 	normals.resize(vertices.size());
-	texCoords.resize(vertices.size());
+	texCoords.resize(vertices.size()); 
 	for (int i = 0; i < facesGroupsIdx_.size(); ++i)
 	{
+		vector<unsigned int> indices_;
 		for (int j = 0; j < facesGroupsIdx_[i].size(); ++j)
 		{
 			Face f = facesGroupsIdx_[i][j];
 			for (int k = 0; k < 3; ++k)
 			{
-				drawVertexNum++;
-				indices.push_back(f[k].posIdx);
+				indices_.push_back(f[k].posIdx);
 				normals[f[k].posIdx] = normals_[f[k].nIdx];
 				texCoords[f[k].posIdx] = texCoords_[f[k].texIdx];
 			}
 			faceNum++;
 		}
+		indices.push_back(indices_);
 	}
 }
  
 void Model::draw(shared_ptr<Shader> shader)
 {
-	for (int i = 0; i < material.size(); ++i)
+	for (int i = 0; i < indices.size(); ++i)
 	{
+		Material &mtl = modelMaterials[materialName[i]];
+
 		shader->setAttrMat4("model", transformMat);
 
-		shader->setAttrVec3("material.ambient", material[i].ambient);
-		shader->setAttrVec3("material.diffuse", material[i].diffuse);
-		shader->setAttrVec3("material.specular", material[i].specular);
-		shader->setAttrF("shininess", material[i].shininess);
-		shader->setAttrB("useDiffuseMap", material[i].useDiffuseMap);
-		shader->setAttrB("useSpecularMap", material[i].useSpecularMap);
-		shader->setAttrB("useNormalMap", material[i].useNormalMap);
+		shader->setAttrVec3("material.ambient", mtl.ambient);
+		shader->setAttrVec3("material.diffuse", mtl.diffuse);
+		shader->setAttrVec3("material.specular", mtl.specular);
+		shader->setAttrF("shininess", mtl.shininess);
+		shader->setAttrB("useDiffuseMap", mtl.useDiffuseMap);
+		shader->setAttrB("useSpecularMap", mtl.useSpecularMap);
+		shader->setAttrB("useNormalMap", mtl.useNormalMap);
 
 		shader->use();
 
-		
 		// texture
-		if (material[i].useDiffuseMap)
+		if (mtl.useDiffuseMap)
 		{
 			glActiveTexture(GL_TEXTURE0);
 			shader->setAttrI("Texture.diffuse", 0);
-			glBindTexture(GL_TEXTURE_2D, material[i].diffuseMap.getID());
+			glBindTexture(GL_TEXTURE_2D, mtl.diffuseMap.getID());
 		}
-		if (material[i].useNormalMap)
+		if (mtl.useNormalMap)
 		{
 			glActiveTexture(GL_TEXTURE1);
 			shader->setAttrI("Texture.normal", 1);
-			glBindTexture(GL_TEXTURE_2D, material[i].normalMap.getID());
+			glBindTexture(GL_TEXTURE_2D, mtl.normalMap.getID());
 		}
-		if (material[i].useSpecularMap)
+		if (mtl.useSpecularMap)
 		{
 			glActiveTexture(GL_TEXTURE2);
 			shader->setAttrI("Texture.specular", 2);
-			glBindTexture(GL_TEXTURE_2D, material[i].specularMap.getID());
+			glBindTexture(GL_TEXTURE_2D, mtl.specularMap.getID());
 		}
 
-		glBindVertexArray(VAO);
-		//glDrawElements(GL_TRIANGLES, drawVertexNum, GL_UNSIGNED_INT, 0);
-		glDrawElements(GL_TRIANGLES, drawVertexNum, GL_UNSIGNED_INT, indices.data());
+		glBindVertexArray(VAOs[i]);
+		glDrawElements(GL_TRIANGLES, indices[i].size(), GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 	}
+
+}
+
+// 读取mtl格式文件
+void Model::loadMaterialLib(string path)
+{
+	ifstream in;
+	in.open(path, std::ifstream::in);
+	if (in.fail())
+	{
+		cout << "Load file " << path << " fail" << endl;
+		return;
+	}			
+
+	string dir; // 当前目录
+	size_t pos = path.find_last_of("/");
+	if (pos != string::npos)
+		dir = path.substr(0, pos+1);
+
+	string line;
+	Material mtl;
+	string mtlName;
+	while (!in.eof())
+	{
+		getline(in, line);
+		if (line.empty())
+			continue;
+		vector<string> tokens;
+		Utility::split(line, tokens, " ");
+		if (tokens[0] == "newmtl")
+		{
+			if (mtlName != "")
+				modelMaterials[mtlName] = mtl;
+			mtlName = tokens[1];
+			mtl.init();
+		}
+		else if (tokens[0] == "Ka")
+		{
+			for (int i = 0; i < 3; ++i)
+				mtl.ambient[i] = atof(tokens[i + 1].c_str());
+		}
+		else if (tokens[0] == "Kd")
+		{
+			for (int i = 0; i < 3; ++i)
+				mtl.diffuse[i] = atof(tokens[i + 1].c_str());
+		}
+		else if (tokens[0] == "Ks")
+		{
+			for (int i = 0; i < 3; ++i)
+				mtl.specular[i] = atof(tokens[i + 1].c_str());
+		}
+		else if (tokens[0] == "Ns")
+		{
+			mtl.shininess = atof(tokens[1].c_str());
+		}
+		else if (tokens[0] == "map_Kd")
+		{
+			string texPath;
+			size_t pos = tokens[1].find_first_of("\\");
+			if(pos == string::npos)
+				pos = tokens[1].find_first_of("/");
+			if (pos == string::npos)
+				texPath = dir + tokens[1];
+			else
+				texPath = dir + tokens[1].substr(pos + 1, tokens[1].size());
+			mtl.loadTexture(texPath, TextureType::Diffuse);
+		}
+		else if (tokens[0] == "map_Ks")
+		{
+			string texPath;
+			size_t pos = tokens[1].find_first_of("\\");
+			if (pos == string::npos)
+				pos = tokens[1].find_first_of("/");
+			if (pos == string::npos)
+				texPath = dir + tokens[1];
+			else
+				texPath = dir + tokens[1].substr(pos + 1, tokens[1].size());
+			mtl.loadTexture(texPath, TextureType::Specular);
+		}
+		else if (tokens[0] == "map_Bump")
+		{
+			string texPath;
+			size_t pos = tokens[1].find_first_of("\\");
+			if (pos == string::npos)
+				pos = tokens[1].find_first_of("/");
+			if (pos == string::npos)
+				texPath = dir + tokens[1];
+			else
+				texPath = dir + tokens[1].substr(pos + 1, tokens[1].size());
+			mtl.loadTexture(texPath, TextureType::Normal);
+		}
+	}
+	if (mtlName != "")
+		modelMaterials[mtlName] = mtl;
+
 }

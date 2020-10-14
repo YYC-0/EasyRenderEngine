@@ -27,32 +27,21 @@ public:
         // create meshes
         lightDir = vec3(-1.0,-1.0, 1.0);
         cube = make_shared<Cube>(2.0, 1.0, 1.0); // size
+        plane = make_shared<Cube>(5.0, 0.02, 5.0);
         // ---cube material
-        Material cubeMaterial;
+        Material cubeMaterial, planeMaterial;
         cubeMaterial.loadTexture("./resources/container.png", TextureType::Diffuse);
         cubeMaterial.loadTexture("./resources/container_specular.png", TextureType::Specular);
-        cubeMaterial.shininess = 64;
         cube->setMaterial(cubeMaterial);
+        planeMaterial.loadTexture("./resources/grass.jpg", TextureType::Diffuse);
+        plane->setMaterial(planeMaterial);
 
-        plane = make_shared<Cube>(5.0, 0.02, 5.0);
-        plane->setMaterial(
-            Material(vec3(1.0, 0.5, 0.31),  // ambient
-                vec3(1.0, 0.5, 0.31),       // diffuse
-                vec3(0.5, 0.5, 0.5),        // specular
-                32.0)                       // shininess
-        );
-        plane->setMaterial(cubeMaterial);
         model = make_shared<Model>();
-        //model->loadObj("./models/spider/spider.obj");
-        //model->setScale({ 0.01,0.01,0.01 });
-        model->loadObj("./models/suzanne/suzanne.obj");
-        model->setPosition({ 0, 1, 0 });
-        model->setMaterial(
-            Material(vec3(1.0, 0.5, 0.31),  // ambient
-                vec3(1.0, 0.5, 0.31),       // diffuse
-                vec3(0.5, 0.5, 0.5),        // specular
-                32.0)                       // shininess
-        );
+        model->loadObj("./models/nanosuit/nanosuit.obj");
+        model->setScale({ 0.1,0.1,0.1 });
+        //model->loadObj("./models/suzanne/suzanne.obj");
+        model->setPosition({ 0, 0, 0 });
+
         // create light
         directionalLight = make_shared<DirectionalLight>(lightDir);
         pointLight = make_shared<PointLight>(vec3(-3, 5, 0));

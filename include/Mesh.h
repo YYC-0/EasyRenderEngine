@@ -30,7 +30,6 @@ public:
 	void setPosition(glm::vec3 pos);
 	void setScale(glm::vec3 scale_);
 
-	unsigned int getVAO() { return VAO; }
 	mat4 getTransMat() { return transformMat; }
 	glm::vec3 getPosition() { return position; }
 	glm::vec3 getScale() { return scale; }
@@ -38,9 +37,9 @@ public:
 	void bind();
 
 protected:
-	unsigned int VAO;
 	unsigned int VBO;
-	unsigned int EBO;
+	vector<unsigned int> VAOs;
+	vector<unsigned int> EBOs;
 
 	vec3 position; // mesh middle position
 	vec3 scale;
@@ -49,12 +48,12 @@ protected:
 
 	int drawVertexNum;
 	int faceNum;
-	vector<unsigned int> indices;
+	vector<vector<unsigned int>> indices;
 	vector<vector<Face>> facesGroupsIdx; // faces groups indices
 	vector<glm::vec3> vertices; // vertex positions
 	vector<glm::vec3> normals;
 	vector<glm::vec2> texCoords;
-	vector<Material> material;
+	vector<Material> materials;
 
 	vector<float> transformToInterleavedData();
 
@@ -64,7 +63,6 @@ class Cube : public Object
 {
 public:
 	Cube(float length_ = 1.0f, float width_ = 1.0f, float height_ = 1.0f, vec3 pos = { 0,0,0 });
-	void init(); // bind data, should be called in your constructor
 	virtual void draw(shared_ptr<Shader> shader);
 
 private:
@@ -85,6 +83,8 @@ public:
 	virtual void draw(shared_ptr<Shader> shader);
 
 private:
-	void loadMaterialLib();
+	vector<string> materialName;
+	map<string, Material> modelMaterials;
+	void loadMaterialLib(string path);
 	
 };
