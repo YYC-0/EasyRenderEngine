@@ -33,6 +33,8 @@ public:
 	void setClearColor(vec3 color);
 	void setCamera(shared_ptr<Camera> camera_);
 
+	void captureImg(string path);
+
 private:
 	shared_ptr<Window> window;
 	GLFWwindow *glfwWindow;
@@ -47,6 +49,13 @@ private:
 	map<string, shared_ptr<Light>> lights;
 
 	vec3 clearColor;
+
+	// shadow
+	GLuint depthMapFBO;
+	GLuint depthMap;
+	GLuint shadowWidth;
+	GLuint shadowHeight;
+	void initShadowMap();
 
 	// will be removed (move to main())
 	shared_ptr<Shader> shader;

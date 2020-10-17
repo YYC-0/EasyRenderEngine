@@ -20,27 +20,32 @@ public:
     myRenderer()
     {
         // initalize window
-        init("TEST", 800, 600);
+        init("TEST", 1024, 768);
 
         // create camera
         camera = make_shared<Camera>(glm::vec3(0.0f, 0.0f, 3.0f));
         // create meshes
-        lightDir = vec3(-1.0,-1.0, 1.0);
+        lightDir = vec3(0, 0, -1.0f);
         cube = make_shared<Cube>(2.0, 1.0, 1.0); // size
         plane = make_shared<Cube>(5.0, 0.02, 5.0);
         // ---cube material
-        Material cubeMaterial, planeMaterial;
-        cubeMaterial.loadTexture("./resources/container.png", TextureType::Diffuse);
-        cubeMaterial.loadTexture("./resources/container_specular.png", TextureType::Specular);
-        cube->setMaterial(cubeMaterial);
-        planeMaterial.loadTexture("./resources/grass.jpg", TextureType::Diffuse);
-        plane->setMaterial(planeMaterial);
+        //Material cubeMaterial, planeMaterial;
+        //cubeMaterial.loadTexture("./resources/container.png", TextureType::Diffuse);
+        //cubeMaterial.loadTexture("./resources/container_specular.png", TextureType::Specular);
+        //cube->setMaterial(cubeMaterial);
+        //planeMaterial.loadTexture("./resources/grass.jpg", TextureType::Diffuse);
+        //plane->setMaterial(planeMaterial);
 
-        model = make_shared<Model>();
-        model->loadObj("./models/nanosuit/nanosuit.obj");
-        model->setScale({ 0.1,0.1,0.1 });
-        //model->loadObj("./models/suzanne/suzanne.obj");
-        model->setPosition({ 0, 0, 0 });
+        //model = make_shared<Model>();
+        //model->loadObj("./models/nanosuit/nanosuit.obj");
+        //model->setScale({ 0.1,0.1,0.1 });
+        ////model->loadObj("./models/suzanne/suzanne.obj");
+        //model->setPosition({ 0, 0, 0 });
+
+        // sponza
+        //sponza = make_shared<Model>("./models/Sponza-master/sponza.obj");
+        //sponza->setScale({ 0.01, 0.01, 0.01 });
+        wall = make_shared<Model>("./models/test/plane_8x6.obj");
 
         // create light
         directionalLight = make_shared<DirectionalLight>(lightDir);
@@ -49,18 +54,20 @@ public:
         shader = make_shared<Shader>("./shaders/materials.vert", "./shaders/materials.frag");
 
         // setting
-        setClearColor(vec3(0.1, 0.1, 0.1));
+        setClearColor(vec3(1, 1, 1));
         setCamera(camera);
 
     }
 
     virtual void addResources()
     {
-        addObject("cube", cube);
-        addObject("plain", plane);
-        addObject("model", model);
+        //addObject("cube", cube);
+        //addObject("plain", plane);
+        //addObject("model", model);
+        //addObject("sponza", sponza);
+        addObject("wall", wall);
         addLight("directionalLight", directionalLight);
-        addLight("pointLight", pointLight);
+        //addLight("pointLight", pointLight);
         addShader(shader);
     }
 
@@ -74,11 +81,13 @@ public:
         pointLight->setColor(lightColor);
 
         vec3 pos(0.0, sin(glfwGetTime()), -1.0);
-        cube->setPosition(pos);
+//        cube->setPosition(pos);
 
-        cube->draw(shader);
-        plane->draw(shader);
-        model->draw(shader);
+        //cube->draw(shader);
+        //plane->draw(shader);
+        //model->draw(shader);
+        //sponza->draw(shader);
+        wall->draw(shader);
     }
 
 private:
@@ -91,6 +100,9 @@ private:
     shared_ptr<Shader> shader;
 
     shared_ptr<Model> model;
+    shared_ptr<Model> sponza;
+
+    shared_ptr<Model> wall;
 };
 
 int main()

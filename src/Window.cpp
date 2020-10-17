@@ -109,7 +109,4 @@ bool Window::glInit()
         return -1;
     }
 
-    // configure global opengl state
-    // -----------------------------
-    glEnable(GL_DEPTH_TEST);
 }

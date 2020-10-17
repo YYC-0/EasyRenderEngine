@@ -1,5 +1,7 @@
 #include "../include/Renderer.h"
 #include <iostream>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "../include/stb_image_write.h"
 
 Renderer::Renderer() :
     window(nullptr),
@@ -8,13 +10,16 @@ Renderer::Renderer() :
     deltaTime(0.0f),
     lastFrame(0.0f),
     clearColor(vec3(0, 0, 0)),
-    lightCube(0.1,0.1,0.1, vec3(1.2, 1.0, 2.0))
+    lightCube(0.1,0.1,0.1, vec3(1.2, 1.0, 2.0)),
+    shadowWidth(1024),
+    shadowHeight(1024)
 {
 }
 
 
 Renderer::~Renderer()
 {
+    glDeleteFramebuffers(1, &depthMapFBO);
 }
 
 void Renderer::init(string windowName, int windowWidth, int windowHeight)
@@ -22,6 +27,10 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
     window = make_shared<Window>(windowName, windowWidth, windowHeight);
 	//window->setCamera(camera);
     glfwWindow = window->getGLFWWindow();
+
+    // configure global opengl state
+    // -----------------------------
+    glEnable(GL_DEPTH_TEST);
 }
 
 void Renderer::run()
@@ -74,10 +83,10 @@ void Renderer::run()
         lightCubeShader->setAttrMat4("model", lightCube.getTransMat());
         
         // render
-        // ------
         glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // user render loop
         renderLoop();
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -137,6 +146,41 @@ void Renderer::setCamera(shared_ptr<Camera> camera_)
     window->setCamera(camera);
 }
 
+void Renderer::captureImg(string path)
+{
+    int width = window->getWidth();
+    int height = window->getHeight();
+    unsigned char* data = new unsigned char[3 * width * height];
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+    stbi_flip_vertically_on_write(true);
+    stbi_write_jpg(path.c_str(), width, height, 3, data, 100);
+
+    delete[] data;
+}
+
+void Renderer::initShadowMap()
+{
+    // create depth map FBO
+    glGenFramebuffers(1, &depthMapFBO);
+    // create depth texture
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+        shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // attach depth texture as FBO's depth buffer
+    glBindBuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void Renderer::renderLoop()
 {
     //// light properties
@@ -167,4 +211,7 @@ void Renderer::processInput()
         camera->processKeyboard(LEFT, deltaTime);
     if (glfwGetKey(glfwWindow, GLFW_KEY_D) == GLFW_PRESS)
         camera->processKeyboard(RIGHT, deltaTime);
+
+    if (glfwGetKey(glfwWindow, GLFW_KEY_SPACE) == GLFW_PRESS)
+        this->captureImg("test.jpg");
 }

@@ -77,8 +77,9 @@ class Model : public Object
 {
 public:
 	Model(vec3 position_ = { 0,0,0 }, vec3 scale_ = { 1.0,1.0,1.0 });
+	Model(const string &path);
 
-	void loadObj(string path);	// load obj model
+	void loadObj(const string &path);	// load obj model
 
 	virtual void draw(shared_ptr<Shader> shader);
 

@@ -14,9 +14,9 @@ enum Camera_Movement {
 // 摄影机默认值
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
-const float SPEED = 2.5f;
+const float SPEED = 4.5f;
 const float SENSITIVITY = 0.1f;
-const float ZOOM = 45.0f;
+const float ZOOM = 90.0f;
 
 class Camera
 {
@@ -38,7 +38,11 @@ public:
 	float zoom;
 
 	// 使用向量的构造函数
-	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : front(glm::vec3(0.0f, 0.0f, -1.0f)), movementSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM)
+	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : 
+		front(glm::vec3(0.0f, 0.0f, -1.0f)), 
+		movementSpeed(SPEED), 
+		mouseSensitivity(SENSITIVITY), 
+		zoom(ZOOM)
 	{
 		this->position = position;
 		this->worldUp = up;
@@ -54,6 +58,11 @@ public:
 		this->yaw = yaw;
 		this->pitch = pitch;
 		updateCameraVectors();
+	}
+
+	void setMovingSpeed(float speed)
+	{
+		this->movementSpeed = speed;
 	}
 
 	// 返回lookAt矩阵

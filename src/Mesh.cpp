@@ -233,7 +233,12 @@ Model::Model(vec3 position_, vec3 scale_) :
 	transformMat = glm::scale(transformMat, scale);
 }
 
-void Model::loadObj(string path)
+Model::Model(const string &path)
+{
+	loadObj(path);
+}
+
+void Model::loadObj(const string &path)
 {
 	ifstream in;
 	in.open(path, std::ifstream::in);
@@ -461,37 +466,26 @@ void Model::loadMaterialLib(string path)
 		else if (tokens[0] == "map_Kd")
 		{
 			string texPath;
-			size_t pos = tokens[1].find_first_of("\\");
-			if(pos == string::npos)
-				pos = tokens[1].find_first_of("/");
-			if (pos == string::npos)
-				texPath = dir + tokens[1];
-			else
-				texPath = dir + tokens[1].substr(pos + 1, tokens[1].size());
+			texPath = dir + tokens[1];
 			mtl.loadTexture(texPath, TextureType::Diffuse);
 		}
 		else if (tokens[0] == "map_Ks")
 		{
 			string texPath;
-			size_t pos = tokens[1].find_first_of("\\");
-			if (pos == string::npos)
-				pos = tokens[1].find_first_of("/");
-			if (pos == string::npos)
-				texPath = dir + tokens[1];
-			else
-				texPath = dir + tokens[1].substr(pos + 1, tokens[1].size());
+			texPath = dir + tokens[1];
 			mtl.loadTexture(texPath, TextureType::Specular);
 		}
 		else if (tokens[0] == "map_Bump")
 		{
 			string texPath;
-			size_t pos = tokens[1].find_first_of("\\");
-			if (pos == string::npos)
-				pos = tokens[1].find_first_of("/");
-			if (pos == string::npos)
-				texPath = dir + tokens[1];
-			else
-				texPath = dir + tokens[1].substr(pos + 1, tokens[1].size());
+			//size_t pos = tokens[1].find_first_of("\\");
+			//if (pos == string::npos)
+			//	pos = tokens[1].find_first_of("/");
+			//if (pos == string::npos)
+			//	texPath = dir + tokens[1];
+			//else
+			//	texPath = dir + tokens[1].substr(pos + 1, tokens[1].size());
+			texPath = dir + tokens[1];
 			mtl.loadTexture(texPath, TextureType::Normal);
 		}
 	}
