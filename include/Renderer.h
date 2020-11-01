@@ -26,6 +26,8 @@ public:
 	virtual void renderLoop();
 	virtual void processInput();
 
+	void draw(shared_ptr<Object> object, shared_ptr<Shader> shader);
+
 	void addObject(string meshName, shared_ptr<Object> mesh);
 	void addLight(string lightName, shared_ptr<Light> light);
 	void addShader(shared_ptr<Shader> shader_); // ´ýÐÞ¸Ä
@@ -34,6 +36,8 @@ public:
 	void setCamera(shared_ptr<Camera> camera_);
 
 	void captureImg(string path);
+
+	shared_ptr<Shader> depthMapShader;
 
 private:
 	shared_ptr<Window> window;
@@ -55,7 +59,13 @@ private:
 	GLuint depthMap;
 	GLuint shadowWidth;
 	GLuint shadowHeight;
+	GLfloat lightNearPlane;
+	GLfloat lightFarPlane;
 	void initShadowMap();
+
+	// render object
+	vector<shared_ptr<Object>> renderObjects;
+	vector<shared_ptr<Shader>> shaders;
 
 	// will be removed (move to main())
 	shared_ptr<Shader> shader;

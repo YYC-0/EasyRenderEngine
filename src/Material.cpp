@@ -43,15 +43,9 @@ bool Texture::load(string imgPath, TextureType type_)
 	}
 }
 
-Material::Material() :
-	ambient(vec3(1.0)),
-	diffuse(vec3(1.0)),
-	specular(vec3(0.5)),
-	shininess(16.0),
-	useDiffuseMap(false), 
-	useNormalMap(false), 
-	useSpecularMap(false)
+Material::Material()
 {
+	init();
 }
 
 void Material::loadTexture(std::string path, TextureType type)
@@ -80,7 +74,7 @@ void Material::init()
 	ambient = vec3(1.0);
 	diffuse = vec3(1.0);
 	specular = vec3(0.5);
-	shininess = 32.0;
+	shininess = 16.0;
 	useDiffuseMap = false;
 	useNormalMap = false;
 	useSpecularMap = false;

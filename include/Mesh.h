@@ -30,7 +30,7 @@ public:
 	void setPosition(glm::vec3 pos);
 	void setScale(glm::vec3 scale_);
 
-	mat4 getTransMat() { return transformMat; }
+	mat4 getTransMat() { return modelMatrix; }
 	glm::vec3 getPosition() { return position; }
 	glm::vec3 getScale() { return scale; }
 
@@ -44,7 +44,8 @@ protected:
 	vec3 position; // mesh middle position
 	vec3 scale;
 	mat4 rotation; // »¹Î´Ìí¼Ó
-	mat4 transformMat;
+	mat4 modelMatrix;
+	mat4 transInvModelMatrix; // transpose(inverse(modelMatrix))
 
 	int drawVertexNum;
 	int faceNum;
@@ -57,6 +58,7 @@ protected:
 
 	vector<float> transformToInterleavedData();
 
+	void updateModelMatrix(); // update model matrix according current position and scale
 };
 
 class Cube : public Object

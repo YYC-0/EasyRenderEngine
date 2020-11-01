@@ -12,7 +12,8 @@ Object::Object() :
 	faceNum(0),
 	position(vec3(0, 0, 0)),
 	scale(vec3(1.0, 1.0, 1.0)),
-	transformMat(glm::mat4(1.0f))
+	modelMatrix(mat4(1.0f)),
+	transInvModelMatrix(mat4(1.0f))
 {
 }
 
@@ -40,17 +41,13 @@ void Object::draw(shared_ptr<Shader> shader)
 void Object::setPosition(glm::vec3 pos)
 {
 	position = pos;
-	transformMat = glm::mat4(1.0f);
-	transformMat = glm::translate(transformMat, position);
-	transformMat = glm::scale(transformMat, scale);
+	updateModelMatrix();
 }
 
 void Object::setScale(glm::vec3 scale_)
 {
 	scale = scale_;
-	transformMat = glm::mat4(1.0f);
-	transformMat = glm::translate(transformMat, position);
-	transformMat = glm::scale(transformMat, scale);
+	updateModelMatrix();
 }
 
 vector<float> Object::transformToInterleavedData()
@@ -68,6 +65,14 @@ vector<float> Object::transformToInterleavedData()
 		interleavedData.push_back(texCoords[i].y);
 	}
 	return interleavedData;
+}
+
+void Object::updateModelMatrix()
+{
+	modelMatrix = glm::mat4(1.0f);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::scale(modelMatrix, scale);
+	transInvModelMatrix = glm::transpose(glm::inverse(modelMatrix));
 }
 
 void Object::bind()
@@ -110,8 +115,8 @@ Cube::Cube(float length_, float width_, float height_, vec3 pos) :
 {	
 	position = pos;
 	scale = vec3(length_, width_, height_);
-	transformMat = glm::translate(transformMat, position);
-	transformMat = glm::scale(transformMat, scale);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::scale(modelMatrix, scale);
 
 	create();
 }
@@ -121,7 +126,8 @@ void Cube::draw(shared_ptr<Shader> shader)
 {
 	for (int i = 0; i < indices.size(); ++i)
 	{
-		shader->setAttrMat4("model", transformMat);
+		shader->setAttrMat4("model", modelMatrix);
+		shader->setAttrMat4("transInvModel", transInvModelMatrix);
 
 		shader->setAttrVec3("material.ambient", materials[i].ambient);
 		shader->setAttrVec3("material.diffuse", materials[i].diffuse);
@@ -131,9 +137,9 @@ void Cube::draw(shared_ptr<Shader> shader)
 		shader->setAttrB("useSpecularMap", materials[i].useSpecularMap);
 		shader->setAttrB("useNormalMap", materials[i].useNormalMap);
 
-		shader->setAttrI("textures.diffuse", 0);
-		shader->setAttrI("textures.normal", 1);
-		shader->setAttrI("textures.specular", 2);
+		shader->setAttrI("textures.diffuse", 1);
+		shader->setAttrI("textures.normal", 2);
+		shader->setAttrI("textures.specular", 3);
 
 		shader->use();
 
@@ -141,17 +147,17 @@ void Cube::draw(shared_ptr<Shader> shader)
 		// texture
 		if (materials[i].useDiffuseMap)
 		{
-			glActiveTexture(GL_TEXTURE0);
+			glActiveTexture(GL_TEXTURE1);
 			glBindTexture(GL_TEXTURE_2D, materials[i].diffuseMap.getID());
 		}
 		if (materials[i].useNormalMap)
 		{
-			glActiveTexture(GL_TEXTURE1);
+			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, materials[i].normalMap.getID());
 		}
 		if (materials[i].useSpecularMap)
 		{
-			glActiveTexture(GL_TEXTURE2);
+			glActiveTexture(GL_TEXTURE3);
 			glBindTexture(GL_TEXTURE_2D, materials[i].specularMap.getID());
 		}
 
@@ -228,9 +234,9 @@ Model::Model(vec3 position_, vec3 scale_) :
 {
 	position = position_;
 	scale = scale_;
-	transformMat = glm::mat4(1.0f);
-	transformMat = glm::translate(transformMat, position);
-	transformMat = glm::scale(transformMat, scale);
+	modelMatrix = glm::mat4(1.0f);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::scale(modelMatrix, scale);
 }
 
 Model::Model(const string &path)
@@ -370,9 +376,12 @@ void Model::draw(shared_ptr<Shader> shader)
 {
 	for (int i = 0; i < indices.size(); ++i)
 	{
-		Material &mtl = modelMaterials[materialName[i]];
+		Material mtl;
+		if(!modelMaterials.empty())
+			mtl = modelMaterials[materialName[i]];
 
-		shader->setAttrMat4("model", transformMat);
+		shader->setAttrMat4("model", modelMatrix);
+		shader->setAttrMat4("transInvModel", transInvModelMatrix);
 
 		shader->setAttrVec3("material.ambient", mtl.ambient);
 		shader->setAttrVec3("material.diffuse", mtl.diffuse);

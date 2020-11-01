@@ -16,7 +16,7 @@ void Light::setColor(vec3 color)
 void Light::updateLightStrength()
 {
 	diffuseStrength = lightColor * vec3(0.5f);
-	ambientStrength = diffuseStrength * vec3(0.2f);
+	ambientStrength = diffuseStrength * vec3(0.3f);
 	specularStrength = vec3(1.0f, 1.0f, 1.0f);
 }
 
@@ -60,14 +60,14 @@ DirectionalLight::DirectionalLight()
 DirectionalLight::DirectionalLight(vec3 dir, vec3 color)
 {
 	lightColor = color;
-	direction = dir;
+	direction = normalize(dir);
 	updateLightStrength();
 	type = LightType::Directional;
 }
 
 void DirectionalLight::setDir(vec3 dir)
 {
-	direction = dir;
+	direction = normalize(dir);
 }
 
 void DirectionalLight::setShaderAttr(std::shared_ptr<Shader> shader, int lightNum)

@@ -18,3 +18,11 @@ void Utility::replace(string & src, string from, string to)
         return;
     src.replace(pos, from.length(), to);
 }
+
+string Utility::getSuffix(const string & fileName)
+{
+    size_t pos = fileName.find_last_of(".");
+    if (pos != string::npos)
+        return fileName.substr(pos + 1, fileName.size());
+    return "";
+}
