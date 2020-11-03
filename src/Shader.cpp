@@ -50,6 +50,15 @@ void Shader::setAttrVec4(const std::string & name, const glm::vec4 & value)
 	attributesVec4[name] = value;
 }
 
+void Shader::setCamera(const Camera &camera)
+{
+	glm::mat4 projection = camera.getProjectionMatrix();
+	glm::mat4 view = camera.getViewMatrix();
+	setAttrVec3("viewPos", camera.position);
+	setAttrMat4("projection", projection);
+	setAttrMat4("view", view);
+}
+
 void Shader::compile()
 {
 	// 1. 从文件路径中获取顶点/片段着色器

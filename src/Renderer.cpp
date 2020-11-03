@@ -11,7 +11,6 @@ Renderer::Renderer() :
     deltaTime(0.0f),
     lastFrame(0.0f),
     clearColor(vec3(0, 0, 0)),
-    lightCube(0.1, 0.1, 0.1, vec3(1.2, 1.0, 2.0)),
     shadowWidth(2048),
     shadowHeight(2048),
     lightNearPlane(1.0f),
@@ -45,18 +44,6 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
 
 void Renderer::run()
 {
-    // 该段以后修改（放至main()中）
-    // ------------------------------------
-    //shader = make_shared<Shader>("./shaders/materials.vs", "./shaders/materials.fs");
-    lightCubeShader = make_shared<Shader>("./shaders/light_cube.vert", "./shaders/light_cube.frag");
-    // create cube
-    lightCube.bind();
-    // create light
-    glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
-
-    //-------------------------------------------------
-
     addResources();
     shader->compile();
     shader->setAttrI("shadowMap", 0);
@@ -87,8 +74,8 @@ void Renderer::run()
             if (light.second->getType() == LightType::Directional)
             {
                 shared_ptr<DirectionalLight> dirLight = dynamic_pointer_cast<DirectionalLight>(light.second);
-                lightProjection = ortho(-50.0f, 50.0f, -50.0f, 50.0f, lightNearPlane, lightFarPlane);
-                lightView = lookAt(-dirLight->getDir()*vec3(30.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
+                lightProjection = ortho(-40.0f, 40.0f, -40.0f, 40.0f, lightNearPlane, lightFarPlane);
+                lightView = lookAt(-dirLight->getDir()*vec3(20.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
                 lightSpaceMatrix = lightProjection * lightView;
             }
 
@@ -104,15 +91,7 @@ void Renderer::run()
         }
 
         // set shader camera
-        glm::mat4 projection = glm::perspective(glm::radians(camera->zoom), (float)window->getWidth() / (float)window->getHeight(), 0.1f, 100.0f);
-        glm::mat4 view = camera->getViewMatrix();
-        shader->setAttrVec3("viewPos", camera->position);
-        //shader->setAttrMat4("projection", lightProjection);
-        //shader->setAttrMat4("view", lightView);
-        shader->setAttrMat4("projection", projection);
-        shader->setAttrMat4("view", view);
-        lightCubeShader->setAttrMat4("projection", projection);
-        lightCubeShader->setAttrMat4("view", view);
+        shader->setCamera(*camera);
 
         // set shader light
         shader->setAttrI("lightNum", lights.size());
@@ -121,7 +100,6 @@ void Renderer::run()
         {
             light.second->setShaderAttr(shader, n++);
         }
-        lightCubeShader->setAttrMat4("model", lightCube.getTransMat());
         
         // render
         glViewport(0, 0, window->getWidth(), window->getHeight());
@@ -277,13 +255,13 @@ void Renderer::processInput()
         glfwSetWindowShouldClose(glfwWindow, true);
 
     if (glfwGetKey(glfwWindow, GLFW_KEY_W) == GLFW_PRESS)
-        camera->processKeyboard(FORWARD, deltaTime);
+        camera->processKeyboard(CameraMovement::FORWARD, deltaTime);
     if (glfwGetKey(glfwWindow, GLFW_KEY_S) == GLFW_PRESS)
-        camera->processKeyboard(BACKWARD, deltaTime);
+        camera->processKeyboard(CameraMovement::BACKWARD, deltaTime);
     if (glfwGetKey(glfwWindow, GLFW_KEY_A) == GLFW_PRESS)
-        camera->processKeyboard(LEFT, deltaTime);
+        camera->processKeyboard(CameraMovement::LEFT, deltaTime);
     if (glfwGetKey(glfwWindow, GLFW_KEY_D) == GLFW_PRESS)
-        camera->processKeyboard(RIGHT, deltaTime);
+        camera->processKeyboard(CameraMovement::RIGHT, deltaTime);
 
     if (glfwGetKey(glfwWindow, GLFW_KEY_SPACE) == GLFW_PRESS)
     {

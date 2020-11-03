@@ -4,6 +4,7 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <map>
+#include "Camera.h"
 
 class Shader
 {
@@ -23,6 +24,7 @@ public:
 	void setAttrVec2(const std::string &name, const glm::vec2 &value);
 	void setAttrVec3(const std::string &name, const glm::vec3 &value);
 	void setAttrVec4(const std::string &name, const glm::vec4 &value);
+	void setCamera(const Camera& camera);
 
 private:
 	std::string vertexPath;

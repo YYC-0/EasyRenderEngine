@@ -195,7 +195,7 @@
 //        lightingShader.setFloat("material.shininess", 32.0f);
 //
 //        // view/projection transformations
-//        glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+//        glm::mat4 projection = glm::perspective(glm::radians(camera.fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 //        glm::mat4 view = camera.getViewMatrix();
 //        lightingShader.setMat4("projection", projection);
 //        lightingShader.setMat4("view", view);

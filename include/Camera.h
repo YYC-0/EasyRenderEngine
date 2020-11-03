@@ -4,28 +4,80 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 
-enum Camera_Movement {
+enum class CameraMovement {
 	FORWARD,
 	BACKWARD,
 	LEFT,
 	RIGHT
 };
 
-// 摄影机默认值
-const float YAW = -90.0f;
-const float PITCH = 0.0f;
-const float SPEED = 4.5f;
-const float SENSITIVITY = 0.1f;
-const float ZOOM = 45.0f;
+enum class CameraType
+{
+	Perpective,
+	Orthogonal
+};
 
 class Camera
 {
 public:
+	// Perpective
+	Camera(float aspect,
+		glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
+		float fov = 45.0f,
+		float yaw = -90.0f,
+		float pitch = 0.0f, 
+		float speed = 4.5f, 
+		float sensitivity = 0.1f,
+		float near = 0.1f,
+		float far = 100.0f);
+	// Orthogonal 
+	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
+		float orthoWidth = 10.0f,
+		float orthoHeight = 10.0f,
+		float yaw = -90.0f,
+		float pitch = 0.0f,
+		float speed = 4.5f,
+		float sensitivity = 0.1f,
+		float near = 0.1f,
+		float far = 100.0f);
+	//Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
+	//	float orthoWidth = 10.0f,
+	//	float orthoHeight = 10.0f,
+	//	glm::vec3 front = glm::vec3(0,0,0),
+	//	float speed = 4.5f,
+	//	float sensitivity = 0.1f,
+	//	float near = 0.1f,
+	//	float far = 100.0f);
+
+	// 使用标量的构造函数
+	//Camera(float posX, float posY, float posZ, 
+	//	float upX, float upY, float upZ, float yaw, float pitch);
+
+	void setMovingSpeed(float speed) {
+		this->movementSpeed = speed;
+	}
+
+	// 返回lookAt矩阵
+	glm::mat4 getViewMatrix() const {
+		return glm::lookAt(position, position + front, up);
+		//return glm::lookAt(position, front, worldUp);
+	}
+	glm::mat4 getProjectionMatrix() const {
+		return projectionMatrix;
+	}
+
+	// 处理键盘输入
+	void processKeyboard(CameraMovement direction, float deltaTime);
+
+	// 处理鼠标移动
+	void processMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
+
+	// 处理鼠标滚轮
+	void processMouseScroll(float yoffset);
+
 	// 摄影机属性
+	CameraType projectionType;
 	glm::vec3 position;
-	glm::vec3 front;
-	glm::vec3 up;
-	glm::vec3 right;
 	glm::vec3 worldUp;
 
 	// 欧拉角
@@ -35,101 +87,26 @@ public:
 	// 摄像机选项
 	float movementSpeed;
 	float mouseSensitivity;
-	float zoom;
+	float fov;
 
-	// 使用向量的构造函数
-	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH) : 
-		front(glm::vec3(0.0f, 0.0f, -1.0f)), 
-		movementSpeed(SPEED), 
-		mouseSensitivity(SENSITIVITY), 
-		zoom(ZOOM)
-	{
-		this->position = position;
-		this->worldUp = up;
-		this->yaw = yaw;
-		this->pitch = pitch;
-		updateCameraVectors();
-	}
-	// 使用标量的构造函数
-	Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : front(glm::vec3(0.0f, 0.0f, -1.0f)), movementSpeed(SPEED), mouseSensitivity(SENSITIVITY), zoom(ZOOM)
-	{
-		this->position = glm::vec3(posX, posY, posZ);
-		this->worldUp = glm::vec3(upX, upY, upZ);
-		this->yaw = yaw;
-		this->pitch = pitch;
-		updateCameraVectors();
-	}
-
-	void setMovingSpeed(float speed)
-	{
-		this->movementSpeed = speed;
-	}
-
-	// 返回lookAt矩阵
-	glm::mat4 getViewMatrix()
-	{
-		return glm::lookAt(position, position + front, up);
-	}
-
-	// 处理键盘输入
-	void processKeyboard(Camera_Movement direction, float deltaTime)
-	{
-		float velocity = movementSpeed * deltaTime;
-		if (direction == FORWARD)
-			position += front * velocity;
-		else if (direction == BACKWARD)
-			position -= front * velocity;
-		else if (direction == LEFT)
-			position -= right * velocity;
-		else if (direction == RIGHT)
-			position += right * velocity;
-
-		// 使摄像机固定在xz平面上
-		// position.y = 0;
-	}
-
-	// 处理鼠标移动
-	void processMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)
-	{
-		xoffset *= mouseSensitivity;
-		yoffset *= mouseSensitivity;
-
-		yaw += xoffset;
-		pitch += yoffset;
-
-		if (constrainPitch)
-		{
-			if (pitch > 89.0f)
-				pitch = 89.0f;
-			if (pitch < -89.0f)
-				pitch = -89.0f;
-		}
-
-		updateCameraVectors();
-	}
-
-	// 处理鼠标滚轮
-	void processMouseScroll(float yoffset)
-	{
-		if (zoom >= 1.0f && zoom <= 45.0f)
-			zoom -= yoffset;
-		if (zoom <= 1.0f)
-			zoom = 1.0f;
-		if (zoom >= 45.0f)
-			zoom = 45.0f;
-	}
+	// 视锥
+	float near;
+	float far;
+	// 透视投影
+	float aspect;
+	// 正交投影
+	float orthoWidth;
+	float orthoHeight;
 
 private:
+	glm::vec3 front;
+	glm::vec3 up;
+	glm::vec3 right;
+	// matrix
+	glm::mat4 projectionMatrix;
+	glm::mat4 viewMatrix;
+
 
 	// 从欧拉角计算 front 向量
-	void updateCameraVectors()
-	{
-		glm::vec3 tmpFront;
-		tmpFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		tmpFront.y = sin(glm::radians(pitch));
-		tmpFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		front = glm::normalize(tmpFront); // 单位化
-		right = glm::normalize(glm::cross(front, worldUp));
-		up = glm::normalize(glm::cross(right, front));
-	}
+	void updateCameraVectors();
 };

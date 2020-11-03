@@ -19,13 +19,16 @@ class myRenderer : public Renderer
 public:
     myRenderer()
     {
+        windowWidth = 1024;
+        windowHeight = 768;
         // initalize window
-        init("TEST", 1024, 768);
+        init("TEST", windowWidth, windowHeight);
 
         // create camera
-        camera = make_shared<Camera>(glm::vec3(0.0f, 0.0f, 3.0f));
+        float aspect = (float)windowWidth / (float)windowHeight;
+        camera = make_shared<Camera>(aspect, glm::vec3(0.0f, 0.0f, 3.0f));
         // create light
-        lightDir = vec3(1.0f, -1.0f, 1.0f);
+        lightDir = vec3(0.3f, -1.0f, 0.3f);
         directionalLight = make_shared<DirectionalLight>(lightDir);
         pointLight = make_shared<PointLight>(vec3(-3, 5, 0));
         // create shader    
@@ -84,11 +87,13 @@ public:
         //model->draw(shader);
         draw(sponza, shader);
         //draw(model, shader);
-        //draw(cube, shader);
-        //draw(plane, shader);
+        draw(cube, shader);
+        draw(plane, shader);
     }
 
 private:
+    int windowWidth;
+    int windowHeight;
     vec3 lightDir;
     shared_ptr<Camera> camera;
     shared_ptr<Cube> cube;

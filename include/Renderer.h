@@ -69,7 +69,4 @@ private:
 
 	// will be removed (move to main())
 	shared_ptr<Shader> shader;
-	shared_ptr<Shader> lightCubeShader;
-	//Object lightCube;
-	Cube lightCube;
 };
