@@ -12,7 +12,7 @@ public:
 	unsigned int ID; // 程序ID
 
 	// 从文件路径中获取顶点/片段着色器 并编译
-	Shader(std::string vertexPath, std::string fragmentPath);
+	Shader(std::string vertexPath, std::string fragmentPath, std::string geometryPath = "");
 
 	void compile();
 	void use();
@@ -29,6 +29,7 @@ public:
 private:
 	std::string vertexPath;
 	std::string fragmentPath;
+	std::string geometryPath;
 	void setBool(const std::string &name, bool value) const;
 	void setInt(const std::string &name, int value) const;
 	void setFloat(const std::string &name, float value) const;

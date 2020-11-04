@@ -9,10 +9,11 @@
 
 using namespace std;
 
-Shader::Shader(string vertexPath_, string fragmentPath_)
+Shader::Shader(string vertexPath_, string fragmentPath_, string geometryPath_)
 {
 	vertexPath = vertexPath_;
 	fragmentPath = fragmentPath_;
+	geometryPath = geometryPath_;
 }
 
 void Shader::setAttrB(const std::string & name, bool value)
@@ -64,12 +65,15 @@ void Shader::compile()
 	// 1. 从文件路径中获取顶点/片段着色器
 	string vertexCode;
 	string fragmentCode;
+	string geometryCode;
 	ifstream vShaderFile;
 	ifstream fShaderFile;
+	ifstream gShaderFile;
 
 	// 保证ifstream对象可以抛出异常：
 	vShaderFile.exceptions(ifstream::failbit | ifstream::badbit);
 	fShaderFile.exceptions(ifstream::failbit | ifstream::badbit);
+	gShaderFile.exceptions(ifstream::failbit | ifstream::badbit);
 	try
 	{
 		vShaderFile.open(vertexPath.c_str());
@@ -84,6 +88,15 @@ void Shader::compile()
 		// 转换数据流到string
 		vertexCode = vShaderStream.str();
 		fragmentCode = fShaderStream.str();
+		// 几何着色器
+		if (geometryPath != "")
+		{
+			gShaderFile.open(geometryPath);
+			std::stringstream gShaderStream;
+			gShaderStream << gShaderFile.rdbuf();
+			gShaderFile.close();
+			geometryCode = gShaderStream.str();
+		}
 	}
 	catch (ifstream::failure a)
 	{
@@ -119,10 +132,28 @@ void Shader::compile()
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 	};
 
+	// 几何着色器
+	unsigned int geometry;
+	if (geometryPath != "")
+	{
+		const char * gShaderCode = geometryCode.c_str();
+		geometry = glCreateShader(GL_GEOMETRY_SHADER);
+		glShaderSource(geometry, 1, &gShaderCode, NULL);
+		glCompileShader(geometry);
+		glGetShaderiv(geometry, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			glGetShaderInfoLog(geometry, 512, NULL, infoLog);
+			std::cout << "ERROR::SHADER::GEOMETRY::COMPILATION_FAILED\n" << infoLog << std::endl;
+		};
+	}
+
 	// 着色器程序
 	ID = glCreateProgram();
 	glAttachShader(ID, vertex);
 	glAttachShader(ID, fragment);
+	if (geometryPath != "")
+		glAttachShader(ID, geometry);
 	glLinkProgram(ID);
 	// 打印连接错误（如果有的话）
 	glGetProgramiv(ID, GL_LINK_STATUS, &success);
@@ -134,6 +165,8 @@ void Shader::compile()
 	// 删除着色器
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
+	if (geometryPath != "")
+		glDeleteShader(geometry);
 }
 
 void Shader::use()

@@ -30,7 +30,7 @@ public:
         // create light
         lightDir = vec3(0.3f, -1.0f, 0.3f);
         directionalLight = make_shared<DirectionalLight>(lightDir);
-        pointLight = make_shared<PointLight>(vec3(-3, 5, 0));
+        pointLight = make_shared<PointLight>(vec3(0, 3, 0));
         // create shader    
         shader = make_shared<Shader>("./shaders/materials.vert", "./shaders/materials.frag");
 
@@ -67,8 +67,8 @@ public:
         addObject("plain", plane);
         //addObject("model", model);
         addObject("sponza", sponza);
-        addLight("directionalLight", directionalLight);
-        //addLight("pointLight", pointLight);
+        //addLight("directionalLight", directionalLight);
+        addLight("pointLight", pointLight);
         addShader(shader);
     }
 

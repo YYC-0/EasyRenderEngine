@@ -37,7 +37,6 @@ public:
 
 	void captureImg(string path);
 
-	shared_ptr<Shader> depthMapShader;
 
 private:
 	shared_ptr<Window> window;
@@ -55,13 +54,19 @@ private:
 	vec3 clearColor;
 
 	// shadow
+	void renderShadowMap();
+	shared_ptr<Shader> depthMapShader;
+	shared_ptr<Shader> depthCubeMapShader;
 	GLuint depthMapFBO;
+	GLuint depthCubeMapFBO;
 	GLuint depthMap;
 	GLuint shadowWidth;
 	GLuint shadowHeight;
 	GLfloat lightNearPlane;
 	GLfloat lightFarPlane;
 	void initShadowMap();
+	vector<GLuint> depthCubeMaps; // point light shadow
+	void initCubeShadowMap();
 
 	// render object
 	vector<shared_ptr<Object>> renderObjects;

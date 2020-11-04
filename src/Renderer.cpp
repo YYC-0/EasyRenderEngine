@@ -38,8 +38,11 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
     // loading shader
     depthMapShader = make_shared<Shader>("./shaders/shadow_mapping.vert", "./shaders/shadow_mapping.frag");
     depthMapShader->compile();
+    depthCubeMapShader = make_shared<Shader>("./shaders/point_shadows_depth.vert", "./shaders/point_shadows_depth.frag", "./shaders/point_shadows_depth.geom");
+    depthCubeMapShader->compile();
 
     initShadowMap();
+    initCubeShadowMap();
 }
 
 void Renderer::run()
@@ -47,6 +50,7 @@ void Renderer::run()
     addResources();
     shader->compile();
     shader->setAttrI("shadowMap", 0);
+    shader->setAttrI("cubeDepthMap", 1);
     // render loop
     // -----------
     while (!glfwWindowShouldClose(glfwWindow))
@@ -65,30 +69,7 @@ void Renderer::run()
         renderLoop();
 
         // render shadow map
-        glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        mat4 lightProjection, lightView;
-        mat4 lightSpaceMatrix;
-        for (auto light : lights)
-        {
-            if (light.second->getType() == LightType::Directional)
-            {
-                shared_ptr<DirectionalLight> dirLight = dynamic_pointer_cast<DirectionalLight>(light.second);
-                lightProjection = ortho(-40.0f, 40.0f, -40.0f, 40.0f, lightNearPlane, lightFarPlane);
-                lightView = lookAt(-dirLight->getDir()*vec3(20.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
-                lightSpaceMatrix = lightProjection * lightView;
-            }
-
-            glCullFace(GL_FRONT); // use cull front face to avoid peter panning
-            depthMapShader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
-            glViewport(0, 0, shadowWidth, shadowHeight);
-            glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            for (int i = 0; i < renderObjects.size(); ++i)
-                renderObjects[i]->draw(depthMapShader);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glCullFace(GL_BACK);
-        }
+        renderShadowMap();
 
         // set shader camera
         shader->setCamera(*camera);
@@ -98,16 +79,12 @@ void Renderer::run()
         int n = 0;
         for (auto light : lights)
         {
-            light.second->setShaderAttr(shader, n++);
+               light.second->setShaderAttr(shader, n++);
         }
         
         // render
         glViewport(0, 0, window->getWidth(), window->getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        // set shadow map
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-        shader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
         // draw objects
         for (int i=0; i<renderObjects.size(); ++i)
         {
@@ -207,6 +184,70 @@ void Renderer::captureImg(string path)
     delete[] data;
 }
 
+void Renderer::renderShadowMap()
+{
+    glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    mat4 lightProjection, lightView;
+    mat4 lightSpaceMatrix;
+    for (auto light : lights)
+    {
+        if (light.second->getType() == LightType::Directional)
+        {
+            shared_ptr<DirectionalLight> dirLight = dynamic_pointer_cast<DirectionalLight>(light.second);
+            lightProjection = ortho(-40.0f, 40.0f, -40.0f, 40.0f, lightNearPlane, lightFarPlane);
+            lightView = lookAt(-dirLight->getDir() * vec3(20.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
+            lightSpaceMatrix = lightProjection * lightView;
+            depthMapShader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
+            shader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+            glCullFace(GL_FRONT); // use cull front face to avoid peter panning
+            glViewport(0, 0, shadowWidth, shadowHeight);
+            glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            for (int i = 0; i < renderObjects.size(); ++i)
+                renderObjects[i]->draw(depthMapShader);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glCullFace(GL_BACK);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, depthMap);
+
+        }
+        else if (light.second->getType() == LightType::Point)
+        {
+            shared_ptr<PointLight> pointLight = dynamic_pointer_cast<PointLight>(light.second);
+            GLfloat aspect = (GLfloat)shadowWidth / (GLfloat)shadowHeight;
+            float farPlane = 50.0f;
+            lightProjection = perspective(radians(90.0f), aspect, 1.0f, farPlane);
+            vector<mat4> shadowTransforms;
+            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0)));
+            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(-1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0)));
+            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0)));
+            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, -1.0, 0.0), vec3(0.0, 0.0, -1.0)));
+            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 0.0, 1.0), vec3(0.0, -1.0, 0.0)));
+            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 0.0, -1.0), vec3(0.0, -1.0, 0.0)));
+            for (int i = 0; i < 6; ++i)
+                depthCubeMapShader->setAttrMat4("shadowMatrices[" + to_string(i) + "]", shadowTransforms[i]);
+            depthCubeMapShader->setAttrF("far_plane", farPlane);
+            depthCubeMapShader->setAttrVec3("lightPos", pointLight->getPos());
+            shader->setAttrF("far_plane", farPlane);
+
+            glCullFace(GL_FRONT); // use cull front face to avoid peter panning
+            glViewport(0, 0, shadowWidth, shadowHeight);
+            glBindFramebuffer(GL_FRAMEBUFFER, depthCubeMapFBO);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            for (int i = 0; i < renderObjects.size(); ++i)
+                renderObjects[i]->draw(depthCubeMapShader);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glCullFace(GL_BACK);
+
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMaps[0]);
+        }
+    }
+}
+
 void Renderer::initShadowMap()
 {
     // create depth map FBO
@@ -227,8 +268,38 @@ void Renderer::initShadowMap()
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
     glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
+    glReadBuffer(GL_NONE); 
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "Framebuffer not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Renderer::initCubeShadowMap()
+{
+    glGenFramebuffers(1, &depthCubeMapFBO);
+
+    GLuint depthCubeMap;
+    glGenTextures(1, &depthCubeMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
+    for (GLuint i = 0; i < 6; ++i)
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
+            shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthCubeMapFBO);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubeMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "Framebuffer not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    depthCubeMaps.push_back(depthCubeMap);
 }
 
 
