@@ -1,4 +1,5 @@
-#version 330 core
+#version 460 core
+#extension GL_EXT_texture_array : enable
 out vec4 FragColor;
 
 uniform float shininess;
@@ -31,14 +32,15 @@ struct Light {
 in vec3 FragPos;  
 in vec3 Normal;
 in vec2 TexCoords;
-in vec4 FragPosLightSpace;
-  
+
+in vec4 FragPosLightSpace[5];   // frag position in directional light space
+ 
 uniform vec3 viewPos;
 uniform Material material;
 uniform Texture textures;
 uniform Light lights[16];
 uniform int lightNum;
-uniform sampler2D shadowMap;
+uniform sampler2DArray shadowMap;
 uniform samplerCube cubeDepthMap;
 uniform float far_plane;
 
@@ -46,6 +48,8 @@ vec3 computeLight(Light light);
 float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir);
 float pointShadowCalculation(vec3 fragPos, vec3 lightPos);
 
+int dirLightNum = 0;
+ 
 void main()
 {
     vec3 result;
@@ -98,9 +102,6 @@ vec3 computeLight(Light light)
         specular = light.specular * (spec * material.specular);  
     
     // shadow
-    vec3 projCoords = FragPosLightSpace.xyz / FragPosLightSpace.w;
-    projCoords = projCoords * 0.5 + 0.5;
-    float pcfDepth = texture(shadowMap, projCoords.xy).r;
     float shadow = 0;
     if(light.type == 0) // point light
     {
@@ -108,7 +109,8 @@ vec3 computeLight(Light light)
     }
     else if(light.type == 1) // directional light
     {
-        shadow = dirShadowCalculation(FragPosLightSpace, lightDir);
+        shadow = dirShadowCalculation(FragPosLightSpace[dirLightNum], lightDir);
+        dirLightNum++;
     }
 
     vec3 result = ambient + (1.0 - shadow) * (diffuse + specular);
@@ -119,7 +121,6 @@ vec3 computeLight(Light light)
 
 float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir)
 {
-//return 0;
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
     if(projCoords.z > 1.0)
@@ -127,11 +128,12 @@ float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir)
     //float bias = max(0.05 * (1.0 - dot(Normal, lightDir)), 0.005);
     float shadow = 0;
     float currentDepth = projCoords.z;
-    vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+    vec2 texelSize = 1.0 / textureSize(shadowMap, 0).xy;
     for(int x=-1; x<=1; ++x)
         for(int y=-1; y<=1; ++y)
         {    
-            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x,y)*texelSize).r;
+            //float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x,y)*texelSize).r;
+            float pcfDepth = texture2DArray(shadowMap, vec3(projCoords.xy + vec2(x,y)*texelSize, dirLightNum)).r;
             shadow += currentDepth > pcfDepth ? 1.0 : 0.0;
         }
     shadow /= 9.0;

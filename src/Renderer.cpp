@@ -14,14 +14,24 @@ Renderer::Renderer() :
     shadowWidth(2048),
     shadowHeight(2048),
     lightNearPlane(1.0f),
-    lightFarPlane(100.0f)
+    lightFarPlane(100.0f),
+    dirLightNumMax(5),
+    pointLightNumMax(1)
 {
+    depthMapFBOs.resize(dirLightNumMax, 0);
+    cubeDepthMapFBOs.resize(pointLightNumMax, 0);
 }
 
 
 Renderer::~Renderer()
 {
-    glDeleteFramebuffers(1, &depthMapFBO);
+    for(int i=0; i<depthMapFBOs.size(); ++i)
+        if(depthMapFBOs[i] != 0)
+            glDeleteFramebuffers(1, &depthMapFBOs[i]);
+
+    for (int i = 0; i < cubeDepthMapFBOs.size(); ++i)
+        if (cubeDepthMapFBOs[i] != 0)
+            glDeleteFramebuffers(1, &cubeDepthMapFBOs[i]);
 }
 
 void Renderer::init(string windowName, int windowWidth, int windowHeight)
@@ -38,8 +48,8 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
     // loading shader
     depthMapShader = make_shared<Shader>("./shaders/shadow_mapping.vert", "./shaders/shadow_mapping.frag");
     depthMapShader->compile();
-    depthCubeMapShader = make_shared<Shader>("./shaders/point_shadows_depth.vert", "./shaders/point_shadows_depth.frag", "./shaders/point_shadows_depth.geom");
-    depthCubeMapShader->compile();
+    cubeDepthMapShader = make_shared<Shader>("./shaders/point_shadows_depth.vert", "./shaders/point_shadows_depth.frag", "./shaders/point_shadows_depth.geom");
+    cubeDepthMapShader->compile();
 
     initShadowMap();
     initCubeShadowMap();
@@ -190,6 +200,8 @@ void Renderer::renderShadowMap()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     mat4 lightProjection, lightView;
     mat4 lightSpaceMatrix;
+    int dirLightNum = 0;
+    int pointLightNum = 0;
     for (auto light : lights)
     {
         if (light.second->getType() == LightType::Directional)
@@ -199,11 +211,11 @@ void Renderer::renderShadowMap()
             lightView = lookAt(-dirLight->getDir() * vec3(20.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
             lightSpaceMatrix = lightProjection * lightView;
             depthMapShader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
-            shader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
+            shader->setAttrMat4("lightSpaceMatrix["+ std::to_string(dirLightNum) + "]", lightSpaceMatrix);
 
             glCullFace(GL_FRONT); // use cull front face to avoid peter panning
             glViewport(0, 0, shadowWidth, shadowHeight);
-            glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+            glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOs[dirLightNum]);
             glClear(GL_DEPTH_BUFFER_BIT);
             for (int i = 0; i < renderObjects.size(); ++i)
                 renderObjects[i]->draw(depthMapShader);
@@ -211,8 +223,9 @@ void Renderer::renderShadowMap()
             glCullFace(GL_BACK);
 
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, depthMap);
+            glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
 
+            dirLightNum++;
         }
         else if (light.second->getType() == LightType::Point)
         {
@@ -228,59 +241,70 @@ void Renderer::renderShadowMap()
             shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 0.0, 1.0), vec3(0.0, -1.0, 0.0)));
             shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 0.0, -1.0), vec3(0.0, -1.0, 0.0)));
             for (int i = 0; i < 6; ++i)
-                depthCubeMapShader->setAttrMat4("shadowMatrices[" + to_string(i) + "]", shadowTransforms[i]);
-            depthCubeMapShader->setAttrF("far_plane", farPlane);
-            depthCubeMapShader->setAttrVec3("lightPos", pointLight->getPos());
+                cubeDepthMapShader->setAttrMat4("shadowMatrices[" + to_string(i) + "]", shadowTransforms[i]);
+            cubeDepthMapShader->setAttrF("far_plane", farPlane);
+            cubeDepthMapShader->setAttrVec3("lightPos", pointLight->getPos());
             shader->setAttrF("far_plane", farPlane);
 
             glCullFace(GL_FRONT); // use cull front face to avoid peter panning
             glViewport(0, 0, shadowWidth, shadowHeight);
-            glBindFramebuffer(GL_FRAMEBUFFER, depthCubeMapFBO);
+            glBindFramebuffer(GL_FRAMEBUFFER, cubeDepthMapFBOs[pointLightNum]);
             glClear(GL_DEPTH_BUFFER_BIT);
             for (int i = 0; i < renderObjects.size(); ++i)
-                renderObjects[i]->draw(depthCubeMapShader);
+                renderObjects[i]->draw(cubeDepthMapShader);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glCullFace(GL_BACK);
 
             glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMaps[0]);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, cubeDepthMap);
+
+            pointLightNum++;
         }
     }
+    shader->setAttrI("dirLightNum", dirLightNum);
 }
 
 void Renderer::initShadowMap()
 {
     // create depth map FBO
-    glGenFramebuffers(1, &depthMapFBO);
+    for(int i=0; i<dirLightNumMax; ++i)
+        glGenFramebuffers(1, &depthMapFBOs[i]);
+
     // create depth texture
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
-        shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glGenTextures(1, &depthMaps);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
+    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT,
+        shadowWidth, shadowHeight, dirLightNumMax, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glTexParameterfv(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     // attach depth texture as FBO's depth buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE); 
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "Framebuffer not complete!" << std::endl;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    for (int i = 0; i < dirLightNumMax; ++i)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOs[i]);
+        //glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_ARRAY, depthMap, 0);
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthMaps, 0, i);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "Framebuffer not complete!" << std::endl;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 }
 
 void Renderer::initCubeShadowMap()
 {
-    glGenFramebuffers(1, &depthCubeMapFBO);
-
-    GLuint depthCubeMap;
-    glGenTextures(1, &depthCubeMap);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, depthCubeMap);
+    // using cube map
+    for (int i = 0; i < pointLightNumMax; ++i) // ÏÖÔÚÊÇ1
+        glGenFramebuffers(1, &cubeDepthMapFBOs[i]);
+    
+    glGenTextures(1, &cubeDepthMap);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeDepthMap);
     for (GLuint i = 0; i < 6; ++i)
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
             shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
@@ -291,15 +315,16 @@ void Renderer::initCubeShadowMap()
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     
     // attach depth texture as FBO's depth buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, depthCubeMapFBO);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthCubeMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        std::cout << "Framebuffer not complete!" << std::endl;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    depthCubeMaps.push_back(depthCubeMap);
+    for (int i = 0; i < pointLightNumMax; ++i)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, cubeDepthMapFBOs[i]);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, cubeDepthMap, 0);
+        glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            std::cout << "Framebuffer not complete!" << std::endl;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
 }
 
 

@@ -26,10 +26,11 @@ public:
 
         // create camera
         float aspect = (float)windowWidth / (float)windowHeight;
-        camera = make_shared<Camera>(aspect, glm::vec3(0.0f, 0.0f, 3.0f));
+        camera = make_shared<Camera>(aspect, glm::vec3(0.0f, 1.0f, 3.0f));
         // create light
-        lightDir = vec3(0.3f, -1.0f, 0.3f);
+        lightDir = vec3(0.2f, -1.0f, 0.2f);
         directionalLight = make_shared<DirectionalLight>(lightDir);
+        directionalLight2 = make_shared<DirectionalLight>(vec3(0.1,-1,0));
         pointLight = make_shared<PointLight>(vec3(0, 3, 0));
         // create shader    
         shader = make_shared<Shader>("./shaders/materials.vert", "./shaders/materials.frag");
@@ -67,7 +68,8 @@ public:
         addObject("plain", plane);
         //addObject("model", model);
         addObject("sponza", sponza);
-        //addLight("directionalLight", directionalLight);
+        addLight("directionalLight", directionalLight);
+        //addLight("directionalLight2", directionalLight2);
         addLight("pointLight", pointLight);
         addShader(shader);
     }
@@ -99,6 +101,7 @@ private:
     shared_ptr<Cube> cube;
     shared_ptr<Cube> plane;
     shared_ptr<DirectionalLight> directionalLight;
+    shared_ptr<DirectionalLight> directionalLight2;
     shared_ptr<PointLight> pointLight;
     shared_ptr<Shader> shader;
 

@@ -55,18 +55,20 @@ private:
 
 	// shadow
 	void renderShadowMap();
+	void initShadowMap();	// directional light
+	void initCubeShadowMap();	// point light
+	int pointLightNumMax;
+	int dirLightNumMax;
 	shared_ptr<Shader> depthMapShader;
-	shared_ptr<Shader> depthCubeMapShader;
-	GLuint depthMapFBO;
-	GLuint depthCubeMapFBO;
-	GLuint depthMap;
+	shared_ptr<Shader> cubeDepthMapShader;
+	vector<GLuint> depthMapFBOs;
+	vector<GLuint> cubeDepthMapFBOs;
+	GLuint depthMaps;	 // directional light shadow array texture
+	GLuint cubeDepthMap; // point light shadow array texture
 	GLuint shadowWidth;
 	GLuint shadowHeight;
 	GLfloat lightNearPlane;
 	GLfloat lightFarPlane;
-	void initShadowMap();
-	vector<GLuint> depthCubeMaps; // point light shadow
-	void initCubeShadowMap();
 
 	// render object
 	vector<shared_ptr<Object>> renderObjects;
