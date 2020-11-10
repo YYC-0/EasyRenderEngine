@@ -50,6 +50,8 @@ private:
 	shared_ptr<Camera> camera;
 	map<string, shared_ptr<Object>> meshes;
 	map<string, shared_ptr<Light>> lights;
+	map<string, shared_ptr<DirectionalLight>> dirLights;
+	map<string, shared_ptr<PointLight>> pointLights;
 
 	vec3 clearColor;
 
@@ -62,11 +64,13 @@ private:
 	shared_ptr<Shader> depthMapShader;
 	shared_ptr<Shader> cubeDepthMapShader;
 	vector<GLuint> depthMapFBOs;
-	vector<GLuint> cubeDepthMapFBOs;
+	GLuint cubeDepthMapFBO;
 	GLuint depthMaps;	 // directional light shadow array texture
 	GLuint cubeDepthMap; // point light shadow array texture
-	GLuint shadowWidth;
-	GLuint shadowHeight;
+	GLuint dirShadowWidth;
+	GLuint dirShadowHeight;
+	GLuint pointShadowWidth;
+	GLuint pointShadowHeight;
 	GLfloat lightNearPlane;
 	GLfloat lightFarPlane;
 

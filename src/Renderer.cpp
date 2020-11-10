@@ -11,15 +11,16 @@ Renderer::Renderer() :
     deltaTime(0.0f),
     lastFrame(0.0f),
     clearColor(vec3(0, 0, 0)),
-    shadowWidth(2048),
-    shadowHeight(2048),
+    dirShadowWidth(2048),
+    dirShadowHeight(2048),
+    pointShadowWidth(512),
+    pointShadowHeight(512),
     lightNearPlane(1.0f),
     lightFarPlane(100.0f),
     dirLightNumMax(5),
-    pointLightNumMax(1)
+    pointLightNumMax(10)
 {
     depthMapFBOs.resize(dirLightNumMax, 0);
-    cubeDepthMapFBOs.resize(pointLightNumMax, 0);
 }
 
 
@@ -29,9 +30,7 @@ Renderer::~Renderer()
         if(depthMapFBOs[i] != 0)
             glDeleteFramebuffers(1, &depthMapFBOs[i]);
 
-    for (int i = 0; i < cubeDepthMapFBOs.size(); ++i)
-        if (cubeDepthMapFBOs[i] != 0)
-            glDeleteFramebuffers(1, &cubeDepthMapFBOs[i]);
+    glDeleteFramebuffers(1, &cubeDepthMapFBO);
 }
 
 void Renderer::init(string windowName, int windowWidth, int windowHeight)
@@ -147,6 +146,10 @@ void Renderer::addLight(string lightName, shared_ptr<Light> light)
         return;
     }
     lights[lightName] = light;
+    if (light->getType() == LightType::Directional)
+        dirLights[lightName] = dynamic_pointer_cast<DirectionalLight>(light);
+    else if (light->getType() == LightType::Point)
+        pointLights[lightName] = dynamic_pointer_cast<PointLight>(light);
 }
 
 void Renderer::addShader(shared_ptr<Shader> shader_)
@@ -196,72 +199,74 @@ void Renderer::captureImg(string path)
 
 void Renderer::renderShadowMap()
 {
+    // render directional light shadow map
     glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     mat4 lightProjection, lightView;
     mat4 lightSpaceMatrix;
     int dirLightNum = 0;
-    int pointLightNum = 0;
-    for (auto light : lights)
+    glCullFace(GL_FRONT); // use cull front face to avoid peter panning
+    glViewport(0, 0, dirShadowWidth, dirShadowHeight);
+    for (auto light : dirLights)
     {
-        if (light.second->getType() == LightType::Directional)
-        {
-            shared_ptr<DirectionalLight> dirLight = dynamic_pointer_cast<DirectionalLight>(light.second);
-            lightProjection = ortho(-40.0f, 40.0f, -40.0f, 40.0f, lightNearPlane, lightFarPlane);
-            lightView = lookAt(-dirLight->getDir() * vec3(20.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
-            lightSpaceMatrix = lightProjection * lightView;
-            depthMapShader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
-            shader->setAttrMat4("lightSpaceMatrix["+ std::to_string(dirLightNum) + "]", lightSpaceMatrix);
+        shared_ptr<DirectionalLight> dirLight = light.second;
+        lightProjection = ortho(-40.0f, 40.0f, -40.0f, 40.0f, lightNearPlane, lightFarPlane);
+        lightView = lookAt(-dirLight->getDir() * vec3(20.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
+        lightSpaceMatrix = lightProjection * lightView;
+        depthMapShader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
+        shader->setAttrMat4("lightSpaceMatrix["+ std::to_string(dirLightNum) + "]", lightSpaceMatrix);
 
-            glCullFace(GL_FRONT); // use cull front face to avoid peter panning
-            glViewport(0, 0, shadowWidth, shadowHeight);
-            glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOs[dirLightNum]);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            for (int i = 0; i < renderObjects.size(); ++i)
-                renderObjects[i]->draw(depthMapShader);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glCullFace(GL_BACK);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOs[dirLightNum]);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        for (int i = 0; i < renderObjects.size(); ++i)
+            renderObjects[i]->draw(depthMapShader);
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
-
-            dirLightNum++;
-        }
-        else if (light.second->getType() == LightType::Point)
-        {
-            shared_ptr<PointLight> pointLight = dynamic_pointer_cast<PointLight>(light.second);
-            GLfloat aspect = (GLfloat)shadowWidth / (GLfloat)shadowHeight;
-            float farPlane = 50.0f;
-            lightProjection = perspective(radians(90.0f), aspect, 1.0f, farPlane);
-            vector<mat4> shadowTransforms;
-            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0)));
-            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(-1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0)));
-            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0)));
-            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, -1.0, 0.0), vec3(0.0, 0.0, -1.0)));
-            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 0.0, 1.0), vec3(0.0, -1.0, 0.0)));
-            shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 0.0, -1.0), vec3(0.0, -1.0, 0.0)));
-            for (int i = 0; i < 6; ++i)
-                cubeDepthMapShader->setAttrMat4("shadowMatrices[" + to_string(i) + "]", shadowTransforms[i]);
-            cubeDepthMapShader->setAttrF("far_plane", farPlane);
-            cubeDepthMapShader->setAttrVec3("lightPos", pointLight->getPos());
-            shader->setAttrF("far_plane", farPlane);
-
-            glCullFace(GL_FRONT); // use cull front face to avoid peter panning
-            glViewport(0, 0, shadowWidth, shadowHeight);
-            glBindFramebuffer(GL_FRAMEBUFFER, cubeDepthMapFBOs[pointLightNum]);
-            glClear(GL_DEPTH_BUFFER_BIT);
-            for (int i = 0; i < renderObjects.size(); ++i)
-                renderObjects[i]->draw(cubeDepthMapShader);
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            glCullFace(GL_BACK);
-
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, cubeDepthMap);
-
-            pointLightNum++;
-        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        dirLightNum++;
     }
-    shader->setAttrI("dirLightNum", dirLightNum);
+
+    glCullFace(GL_BACK);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
+
+
+    // render point light shadow map
+    int pointLightNum = 0;
+    glCullFace(GL_FRONT); // use cull front face to avoid peter panning
+    glViewport(0, 0, pointShadowWidth, pointShadowHeight);
+    glBindFramebuffer(GL_FRAMEBUFFER, cubeDepthMapFBO);
+    glClear(GL_DEPTH_BUFFER_BIT);
+    for (auto light : pointLights)
+    {
+        shared_ptr<PointLight> pointLight = light.second;
+        GLfloat aspect = (GLfloat)pointShadowWidth / (GLfloat)pointShadowHeight;
+        float farPlane = 30.0f;
+        lightProjection = perspective(radians(90.0f), aspect, 1.0f, farPlane);
+        vector<mat4> shadowTransforms;
+        shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0)));
+        shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(-1.0, 0.0, 0.0), vec3(0.0, -1.0, 0.0)));
+        shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 1.0, 0.0), vec3(0.0, 0.0, 1.0)));
+        shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, -1.0, 0.0), vec3(0.0, 0.0, -1.0)));
+        shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 0.0, 1.0), vec3(0.0, -1.0, 0.0)));
+        shadowTransforms.push_back(lightProjection * lookAt(pointLight->getPos(), pointLight->getPos() + vec3(0.0, 0.0, -1.0), vec3(0.0, -1.0, 0.0)));
+        for (int i = 0; i < 6; ++i)
+            cubeDepthMapShader->setAttrMat4("shadowMatrices[" + to_string(i) + "]", shadowTransforms[i]);
+        cubeDepthMapShader->setAttrF("far_plane", farPlane);
+        cubeDepthMapShader->setAttrVec3("lightPos", pointLight->getPos());
+        cubeDepthMapShader->setAttrI("lightNum", pointLightNum);
+        shader->setAttrF("far_plane", farPlane);
+
+        for (int i = 0; i < renderObjects.size(); ++i)
+            renderObjects[i]->draw(cubeDepthMapShader);
+
+        pointLightNum++;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glCullFace(GL_BACK);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeDepthMap);
 }
 
 void Renderer::initShadowMap()
@@ -275,7 +280,7 @@ void Renderer::initShadowMap()
     glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
     //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_DEPTH_COMPONENT,
-        shadowWidth, shadowHeight, dirLightNumMax, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        dirShadowWidth, dirShadowHeight, dirLightNumMax, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -300,31 +305,31 @@ void Renderer::initShadowMap()
 void Renderer::initCubeShadowMap()
 {
     // using cube map
-    for (int i = 0; i < pointLightNumMax; ++i) // ÏÖÔÚÊÇ1
-        glGenFramebuffers(1, &cubeDepthMapFBOs[i]);
+    glGenFramebuffers(1, &cubeDepthMapFBO);
     
     glGenTextures(1, &cubeDepthMap);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeDepthMap);
-    for (GLuint i = 0; i < 6; ++i)
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
-            shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeDepthMap);
+    glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_DEPTH_COMPONENT,
+        pointShadowWidth, pointShadowHeight, 6*pointLightNumMax, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    //for (GLuint i = 0; i < 6 * pointLightNumMax; ++i)
+    //    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
+    //        shadowWidth, shadowHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARRAY, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     
     // attach depth texture as FBO's depth buffer
-    for (int i = 0; i < pointLightNumMax; ++i)
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, cubeDepthMapFBOs[i]);
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, cubeDepthMap, 0);
-        glDrawBuffer(GL_NONE);
-        glReadBuffer(GL_NONE);
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            std::cout << "Framebuffer not complete!" << std::endl;
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
+    glBindFramebuffer(GL_FRAMEBUFFER, cubeDepthMapFBO);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, cubeDepthMap, 0);
+    //glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, cubeDepthMap, 0, 1);
+    //glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X, cubeDepthMap, 0, i);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "Point light shadow framebuffer not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 

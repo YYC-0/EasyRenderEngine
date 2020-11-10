@@ -13,7 +13,6 @@ uniform mat4 transInvModel;
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 lightSpaceMatrix[5];
-uniform int dirLightNum;
 
 void main()
 {

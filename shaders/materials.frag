@@ -41,7 +41,7 @@ uniform Texture textures;
 uniform Light lights[16];
 uniform int lightNum;
 uniform sampler2DArray shadowMap;
-uniform samplerCube cubeDepthMap;
+uniform samplerCubeArray cubeDepthMap;
 uniform float far_plane;
 
 vec3 computeLight(Light light);
@@ -49,6 +49,7 @@ float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir);
 float pointShadowCalculation(vec3 fragPos, vec3 lightPos);
 
 int dirLightNum = 0;
+int pointLightNum = 0;
  
 void main()
 {
@@ -61,7 +62,7 @@ void main()
     FragColor = vec4(result, 1.0);
     
 //    vec3 fragToLight = FragPos - lights[0].position;
-//    float closestDepth = texture(cubeDepthMap, fragToLight).r;
+//    float closestDepth = texture(cubeDepthMap, vec4(fragToLight, pointLightNum)).r;
 //    closestDepth *= far_plane;
 //    FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
 
@@ -106,6 +107,7 @@ vec3 computeLight(Light light)
     if(light.type == 0) // point light
     {
         shadow = pointShadowCalculation(FragPos, light.position);
+        pointLightNum++;
     }
     else if(light.type == 1) // directional light
     {
@@ -144,7 +146,8 @@ float pointShadowCalculation(vec3 fragPos, vec3 lightPos)
 {
 //return 0;
     vec3 fragToLight = fragPos - lightPos;
-    float closestDepth = texture(cubeDepthMap, fragToLight).r;
+    //float closestDepth = texture(cubeDepthMap, fragToLight).r;
+    float closestDepth = texture(cubeDepthMap, vec4(fragToLight, pointLightNum)).r;
     closestDepth *= far_plane;
     float currentDepth = length(fragToLight);
 
