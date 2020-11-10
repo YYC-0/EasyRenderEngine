@@ -27,6 +27,10 @@ struct Light {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+
+    float constant;
+    float linear;
+    float quadratic;
 };
 
 in vec3 FragPos;  
@@ -71,10 +75,11 @@ void main()
 vec3 computeLight(Light light)
 {
     vec3 lightDir;
-    if(light.type == 0) // point light
-        lightDir = normalize(light.position - FragPos);
-    else if(light.type == 1) // directional light
-        lightDir = normalize(-light.direction);
+//    if(light.type == 0) // point light
+//        lightDir = normalize(light.position - FragPos);
+//    else if(light.type == 1) // directional light
+//        lightDir = normalize(-light.direction);
+    lightDir = normalize(light.type * (-light.direction) + (1-light.type) * (light.position - FragPos));
 
     // ambient
     vec3 ambient;
@@ -102,10 +107,14 @@ vec3 computeLight(Light light)
     else
         specular = light.specular * (spec * material.specular);  
     
+    float attenuation = 1.0;
     // shadow
     float shadow = 0;
     if(light.type == 0) // point light
     {
+        // attenuation
+        float dis = length(light.position - FragPos);
+        attenuation = 1.0 / (light.constant + light.linear*dis + light.quadratic*(dis*dis));
         shadow = pointShadowCalculation(FragPos, light.position);
         pointLightNum++;
     }
@@ -115,7 +124,7 @@ vec3 computeLight(Light light)
         dirLightNum++;
     }
 
-    vec3 result = ambient + (1.0 - shadow) * (diffuse + specular);
+    vec3 result = attenuation * (ambient + (1.0 - shadow) * (diffuse + specular));
     
     return result;
     //return vec3(shadow, 0, 0);

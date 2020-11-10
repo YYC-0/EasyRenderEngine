@@ -46,10 +46,16 @@ public:
 
 	void setPosition(vec3 pos);
 	vec3 getPos() { return position; }
+	void setAttenuation(float constant_, float linear_, float quadratic_);
 	virtual void setShaderAttr(std::shared_ptr<Shader> shader, int lightNum);
 
 private:
 	vec3 position;
+
+	// attenuation coefficient
+	float constant;
+	float linear;
+	float quadratic;
 };
 
 // ¶¨Ïò¹â

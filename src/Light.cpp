@@ -20,14 +20,20 @@ void Light::updateLightStrength()
 	specularStrength = vec3(1.0f, 1.0f, 1.0f);
 }
 
-PointLight::PointLight()
+PointLight::PointLight() : 
+	constant(1.0f),
+	linear(0.09f),
+	quadratic(0.032f)
 {
 	position = vec3(0.0f, 0.0f, 0.0f);
 	updateLightStrength();
 	type = LightType::Point;
 }
 
-PointLight::PointLight(vec3 pos, vec3 color)
+PointLight::PointLight(vec3 pos, vec3 color) :
+	constant(1.0f),
+	linear(0.09f),
+	quadratic(0.032f)
 {
 	lightColor = color;
 	position = pos;
@@ -40,6 +46,13 @@ void PointLight::setPosition(vec3 pos)
 	position = pos;
 }
 
+void PointLight::setAttenuation(float constant_, float linear_, float quadratic_)
+{
+	constant = constant_;
+	linear = linear_;
+	quadratic = quadratic_;
+}
+
 void PointLight::setShaderAttr(std::shared_ptr<Shader> shader, int lightNum)
 {
 	std::string pre = "lights[" + std::to_string(lightNum) + "].";
@@ -48,6 +61,9 @@ void PointLight::setShaderAttr(std::shared_ptr<Shader> shader, int lightNum)
 	shader->setAttrVec3(pre + "ambient", ambientStrength);
 	shader->setAttrVec3(pre + "diffuse", diffuseStrength);
 	shader->setAttrVec3(pre + "specular", specularStrength);
+	shader->setAttrF(pre + "constant", constant);
+	shader->setAttrF(pre + "linear", linear);
+	shader->setAttrF(pre + "quadratic", quadratic);
 }
 
 DirectionalLight::DirectionalLight()
