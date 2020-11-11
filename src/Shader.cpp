@@ -31,6 +31,11 @@ void Shader::setAttrF(const std::string & name, float value)
 	attributesFloat[name] = value;
 }
 
+void Shader::setAttrMat3(const std::string & name, const glm::mat3 & mat)
+{
+	attributesMat3[name] = mat;
+}
+
 void Shader::setAttrMat4(const std::string & name, const glm::mat4 & mat)
 {
 	attributesMat4[name] = mat;
@@ -185,6 +190,8 @@ void Shader::use()
 		setVec3(attrVec3.first, attrVec3.second);
 	for (auto attrVec4 : attributesVec4)
 		setVec4(attrVec4.first, attrVec4.second);
+	for (auto attrMat3 : attributesMat3)
+		setMat4(attrMat3.first, attrMat3.second);
 	for (auto attrMat4 : attributesMat4)
 		setMat4(attrMat4.first, attrMat4.second);
 }
@@ -202,6 +209,11 @@ void Shader::setInt(const std::string &name, int value) const
 void Shader::setFloat(const std::string &name, float value) const
 {
 	glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
+}
+
+void Shader::setMat3(const std::string & name, glm::mat3 mat) const
+{
+	glUniformMatrix3fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, glm::value_ptr(mat));
 }
 
 void Shader::setMat4(const std::string &name, glm::mat4 value) const

@@ -11,8 +11,8 @@ bool Texture::load(string imgPath, TextureType type_)
 	path = imgPath;
 
 	glGenTextures(1, &id);
-
 	int width, height, nrComponents;
+	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(imgPath.c_str(), &width, &height, &nrComponents, 0);
 	if (data)
 	{

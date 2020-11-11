@@ -32,7 +32,9 @@ public:
         directionalLight = make_shared<DirectionalLight>(lightDir);
         directionalLight2 = make_shared<DirectionalLight>(vec3(0.1,-1,0));
         pointLight = make_shared<PointLight>(vec3(0, 3, 0));
+        pointLight->setAttenuation(1.0f, 0.045f, 0.0075f);
         pointLight2 = make_shared<PointLight>(vec3(7, 3, 0));
+        pointLight2->setAttenuation(1.0f, 0.045f, 0.0075f);
         // create shader    
         shader = make_shared<Shader>("./shaders/materials.vert", "./shaders/materials.frag");
 
@@ -41,8 +43,9 @@ public:
         plane = make_shared<Cube>(10.0, 0.02, 10.0);
         // ---cube material
         Material cubeMaterial, planeMaterial;
-        cubeMaterial.loadTexture("./resources/container.png", TextureType::Diffuse);
-        cubeMaterial.loadTexture("./resources/container_specular.png", TextureType::Specular);
+        cubeMaterial.loadTexture("./resources/brickwall.jpg", TextureType::Diffuse);
+        //cubeMaterial.loadTexture("./resources/container_specular.png", TextureType::Specular);
+        cubeMaterial.loadTexture("./resources/brickwall_normal.jpg", TextureType::Normal);
         cube->setMaterial(cubeMaterial);
         planeMaterial.loadTexture("./resources/grass.jpg", TextureType::Diffuse);
         plane->setMaterial(planeMaterial);
@@ -66,7 +69,7 @@ public:
     virtual void addResources()
     {
         addObject("cube", cube);
-        addObject("plain", plane);
+        //addObject("plain", plane);
         //addObject("model", model);
         addObject("sponza", sponza);
         //addLight("directionalLight", directionalLight);
@@ -92,7 +95,7 @@ public:
         draw(sponza, shader);
         //draw(model, shader);
         draw(cube, shader);
-        draw(plane, shader);
+        //draw(plane, shader);
     }
 
 private:

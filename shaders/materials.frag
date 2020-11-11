@@ -36,6 +36,7 @@ struct Light {
 in vec3 FragPos;  
 in vec3 Normal;
 in vec2 TexCoords;
+in mat3 TBN;
 
 in vec4 FragPosLightSpace[5];   // frag position in directional light space
  
@@ -54,9 +55,18 @@ float pointShadowCalculation(vec3 fragPos, vec3 lightPos);
 
 int dirLightNum = 0;
 int pointLightNum = 0;
- 
+vec3 normal;
 void main()
 {
+    normal = Normal;
+    if(useNormalMap)
+    {
+        normal = texture(textures.normal, TexCoords).rgb;
+        normal = normalize(normal * 2.0 - 1.0);
+        normal = normalize(TBN * normal);
+    }
+//    FragColor = vec4(normal, 1.0);
+
     vec3 result;
     for(int i=0; i<lightNum; ++i)
     {
@@ -90,7 +100,7 @@ vec3 computeLight(Light light)
   	
     // diffuse 
     vec3 diffuse;
-    vec3 norm = normalize(Normal);
+    vec3 norm = normalize(normal);
     float diff = max(dot(norm, lightDir), 0.0);
     if(useDiffuseMap)
         diffuse = light.diffuse * diff * texture(textures.diffuse, TexCoords).rgb;
@@ -136,7 +146,7 @@ float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir)
     projCoords = projCoords * 0.5 + 0.5;
     if(projCoords.z > 1.0)
         return 0.0;
-    //float bias = max(0.05 * (1.0 - dot(Normal, lightDir)), 0.005);
+    //float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
     float shadow = 0;
     float currentDepth = projCoords.z;
     vec2 texelSize = 1.0 / textureSize(shadowMap, 0).xy;
@@ -150,17 +160,31 @@ float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir)
     shadow /= 9.0;
     return shadow;
 }
-
+vec3 sampleOffsetDirections[20] = vec3[]
+(
+   vec3( 1,  1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1,  1,  1), 
+   vec3( 1,  1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1,  1, -1),
+   vec3( 1,  1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1,  1,  0),
+   vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
+   vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
+);
 float pointShadowCalculation(vec3 fragPos, vec3 lightPos)
 {
-//return 0;
     vec3 fragToLight = fragPos - lightPos;
     //float closestDepth = texture(cubeDepthMap, fragToLight).r;
-    float closestDepth = texture(cubeDepthMap, vec4(fragToLight, pointLightNum)).r;
-    closestDepth *= far_plane;
-    float currentDepth = length(fragToLight);
+    float shadow = 0.0;
+    float diskRadius = 0.05;
+    int samples = 20;
+    for(int i=0; i<samples; ++i)
+    {
+        vec3 samplePos = fragToLight + sampleOffsetDirections[i]*diskRadius;
+        float closestDepth = texture(cubeDepthMap, vec4(samplePos, pointLightNum)).r;
+        closestDepth *= far_plane;
+        float currentDepth = length(fragToLight);
 
-    float shadow = currentDepth > closestDepth ? 1.0 : 0.0;
-
+        shadow += currentDepth > closestDepth ? 1.0 : 0.0;
+    }
+    shadow /= float(samples);
+    
     return shadow;
 }

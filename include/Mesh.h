@@ -54,11 +54,15 @@ protected:
 	vector<glm::vec3> vertices; // vertex positions
 	vector<glm::vec3> normals;
 	vector<glm::vec2> texCoords;
+	vector<glm::vec3> tangents;		// used for noraml map
+	vector<glm::vec3> bitangents;	// used for normal map
 	vector<Material> materials;
 
 	vector<float> transformToInterleavedData();
 
 	void updateModelMatrix(); // update model matrix according current position and scale
+	pair<vec3, vec3> computeTB(const vec3& pos1, const vec3& pos2, const vec3& pos3,
+		const vec2& uv1, const vec2& uv2, const vec2& uv3);	// compute tangent and bitangent
 };
 
 class Cube : public Object

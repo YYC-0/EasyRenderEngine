@@ -56,14 +56,24 @@ vector<float> Object::transformToInterleavedData()
 	vector<float> interleavedData;
 	for (int i = 0; i < vertices.size(); ++i)
 	{
+		// position
 		interleavedData.push_back(vertices[i].x);
 		interleavedData.push_back(vertices[i].y);
 		interleavedData.push_back(vertices[i].z);
+		// normal
 		interleavedData.push_back(normals[i].x);
 		interleavedData.push_back(normals[i].y);
 		interleavedData.push_back(normals[i].z);
+		// texture coord
 		interleavedData.push_back(texCoords[i].x);
 		interleavedData.push_back(texCoords[i].y);
+		// tangent bitangent
+		interleavedData.push_back(tangents[i].x);
+		interleavedData.push_back(tangents[i].y);
+		interleavedData.push_back(tangents[i].z);
+		interleavedData.push_back(bitangents[i].x);
+		interleavedData.push_back(bitangents[i].y);
+		interleavedData.push_back(bitangents[i].z);
 	}
 	return interleavedData;
 }
@@ -74,6 +84,30 @@ void Object::updateModelMatrix()
 	modelMatrix = glm::translate(modelMatrix, position);
 	modelMatrix = glm::scale(modelMatrix, scale);
 	transInvModelMatrix = glm::transpose(glm::inverse(modelMatrix));
+}
+
+pair<vec3, vec3> Object::computeTB(const vec3 & pos1, const vec3 & pos2, const vec3 & pos3, 
+	const vec2 & uv1, const vec2 & uv2, const vec2 & uv3)
+{
+	vec3 tangent, bitangent;
+	vec3 edge1 = pos2 - pos1;
+	vec3 edge2 = pos3 - pos1;
+	vec2 deltaUV1 = uv2 - uv1;
+	vec2 deltaUV2 = uv3 - uv1;
+
+	GLfloat f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+	tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+	tangent = glm::normalize(tangent);
+
+	bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+	bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+	bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+	bitangent = glm::normalize(bitangent);
+
+	return { tangent, bitangent };
 }
 
 void Object::bind()
@@ -102,6 +136,10 @@ void Object::bind()
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride, (void *)(6 * sizeof(float)));
 		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, stride, (void *)(8 * sizeof(float)));
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, stride, (void *)(11 * sizeof(float)));
+		glEnableVertexAttribArray(4);
 
 		glBindVertexArray(0);
 
@@ -189,6 +227,7 @@ void Cube::create()
 		 vec3(0.5f, -0.5f, -0.5f)
 	};
 
+	// vertex positions
 	vertices = vector<vec3>{
 	   v[0],v[1],v[2], v[3], // forward
 	   v[4],v[0],v[3], v[7], // right
@@ -227,6 +266,18 @@ void Cube::create()
 	};
 
 	faceNum = indices.size() / 3;
+
+	// tangent bitangent
+	for (int i = 0; i < indices[0].size(); i += 3)
+	{
+		pair<vec3, vec3> tan = computeTB(vertices[indices[0][i]], vertices[indices[0][i + 1]], vertices[indices[0][i + 2]],
+			texCoords[indices[0][i]], texCoords[indices[0][i + 1]], texCoords[indices[0][i + 2]]);
+		for (int j = 0; j < 2; ++j)
+		{
+			tangents.push_back(tan.first);
+			bitangents.push_back(tan.second);
+		}
+	}
 }
 
 // Model ---------------------------------------------------------------------
@@ -361,13 +412,20 @@ void Model::loadObj(const string &path)
 		for (int j = 0; j < facesGroupsIdx_[i].size(); ++j)
 		{
 			Face f = facesGroupsIdx_[i][j];
+			int idx[3];
 			for (int k = 0; k < 3; ++k)
 			{
+				idx[k] = f[k].posIdx;
 				indices_.push_back(f[k].posIdx);
 				normals[f[k].posIdx] = normals_[f[k].nIdx];
 				texCoords[f[k].posIdx] = texCoords_[f[k].texIdx];
 			}
 			faceNum++;
+
+			pair<vec3, vec3> tan = computeTB(vertices[idx[0]], vertices[idx[1]], vertices[idx[2]],
+				texCoords[idx[0]], texCoords[idx[1]], texCoords[idx[2]]);
+			tangents.push_back(tan.first);
+			bitangents.push_back(tan.second);
 		}
 		indices.push_back(indices_);
 	}
@@ -402,19 +460,16 @@ void Model::draw(shared_ptr<Shader> shader)
 		if (mtl.useDiffuseMap)
 		{
 			glActiveTexture(GL_TEXTURE2);
-			shader->setAttrI("Texture.diffuse", 2);
 			glBindTexture(GL_TEXTURE_2D, mtl.diffuseMap.getID());
 		}
 		if (mtl.useNormalMap)
 		{
 			glActiveTexture(GL_TEXTURE3);
-			shader->setAttrI("Texture.normal", 3);
 			glBindTexture(GL_TEXTURE_2D, mtl.normalMap.getID());
 		}
 		if (mtl.useSpecularMap)
 		{
 			glActiveTexture(GL_TEXTURE4);
-			shader->setAttrI("Texture.specular", 4);
 			glBindTexture(GL_TEXTURE_2D, mtl.specularMap.getID());
 		}
 
