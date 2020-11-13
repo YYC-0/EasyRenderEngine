@@ -57,8 +57,13 @@ public:
         model->setPosition({ 0, 0, 0 });
 
         // sponza
-        sponza = make_shared<Model>("./models/Sponza-master/sponza.obj");
-        sponza->setScale({ 0.01, 0.01, 0.01 });
+        //sponza = make_shared<Model>("./models/Sponza-master/sponza.obj");
+        //sponza->setScale({ 0.01, 0.01, 0.01 });
+
+        // Gui
+        gui = make_shared<Gui>();
+        gui->addObject("cube", cube);
+        gui->addObject("plain", plane);
 
         // setting
         setClearColor(vec3(1, 1, 1));
@@ -69,14 +74,15 @@ public:
     virtual void addResources()
     {
         addObject("cube", cube);
-        //addObject("plain", plane);
+        addObject("plain", plane);
         //addObject("model", model);
-        addObject("sponza", sponza);
+       // addObject("sponza", sponza);
         //addLight("directionalLight", directionalLight);
        // addLight("directionalLight2", directionalLight2);
         addLight("pointLight", pointLight);
         addLight("pointLight2", pointLight2);
         addShader(shader);
+        addGui(gui);
     }
 
     virtual void renderLoop()
@@ -87,18 +93,17 @@ public:
         //lightColor.y = sin(glfwGetTime() * 0.7f);
         //lightColor.z = sin(glfwGetTime() * 1.3f);
         pointLight->setColor(lightColor);
-
-        vec3 pos(0.0, sin(glfwGetTime()) + 1, -1.0);
-        cube->setPosition(pos);
+        pointLight->setPosition(lightPos);
 
         //model->draw(shader);
-        draw(sponza, shader);
+        //draw(sponza, shader);
         //draw(model, shader);
         draw(cube, shader);
-        //draw(plane, shader);
+        draw(plane, shader);
     }
 
 private:
+    vec3 lightPos;
     int windowWidth;
     int windowHeight;
     vec3 lightDir;
@@ -113,6 +118,8 @@ private:
 
     shared_ptr<Model> model;
     shared_ptr<Model> sponza;
+
+    shared_ptr<Gui> gui;
 };
 
 int main()

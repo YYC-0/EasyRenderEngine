@@ -10,6 +10,7 @@
 #include "Window.h"
 #include "Mesh.h"
 #include "Light.h"
+#include "Gui.h"
 
 using namespace std;
 
@@ -31,6 +32,7 @@ public:
 	void addObject(string meshName, shared_ptr<Object> mesh);
 	void addLight(string lightName, shared_ptr<Light> light);
 	void addShader(shared_ptr<Shader> shader_); // ´ýÐÞ¸Ä
+	void addGui(shared_ptr<Gui> gui_);
 
 	void setClearColor(vec3 color);
 	void setCamera(shared_ptr<Camera> camera_);
@@ -77,6 +79,9 @@ private:
 	// render object
 	vector<shared_ptr<Object>> renderObjects;
 	vector<shared_ptr<Shader>> shaders;
+
+	// GUI
+	shared_ptr<Gui> gui;
 
 	// will be removed (move to main())
 	shared_ptr<Shader> shader;

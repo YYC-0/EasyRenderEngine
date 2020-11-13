@@ -27,12 +27,18 @@ public:
 	void setMaterial(Material m);
 	virtual void draw(shared_ptr<Shader> shader);
 
-	void setPosition(glm::vec3 pos);
-	void setScale(glm::vec3 scale_);
+	void setTransform(const vec3& pos_, const vec3& scale_, const vector<float>& rotation_);
+	void setPosition(const vec3& pos_);
+	void setScale(const vec3& scale_);
+	void setRotation(const vector<float>& rotation_);
+	void setRotateX(float degree);
+	void setRotateY(float degree);
+	void setRotateZ(float degree);
 
 	mat4 getTransMat() { return modelMatrix; }
 	glm::vec3 getPosition() { return position; }
 	glm::vec3 getScale() { return scale; }
+	vector<float> getRotation() { return rotateAngle; }
 
 	void bind();
 
@@ -43,7 +49,7 @@ protected:
 
 	vec3 position; // mesh middle position
 	vec3 scale;
-	mat4 rotation; // »¹Î´Ìí¼Ó
+	vector<float> rotateAngle; // rotate angles of three axis
 	mat4 modelMatrix;
 	mat4 transInvModelMatrix; // transpose(inverse(modelMatrix))
 

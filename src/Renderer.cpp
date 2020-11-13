@@ -4,6 +4,10 @@
 #include "../include/Renderer.h"
 #include "../include/Utility.h"
 
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 Renderer::Renderer() :
     window(nullptr),
     camera(nullptr),
@@ -18,7 +22,8 @@ Renderer::Renderer() :
     lightNearPlane(1.0f),
     lightFarPlane(100.0f),
     dirLightNumMax(5),
-    pointLightNumMax(10)
+    pointLightNumMax(10),
+    gui(nullptr)
 {
     depthMapFBOs.resize(dirLightNumMax, 0);
 }
@@ -52,14 +57,37 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
 
     initShadowMap();
     initCubeShadowMap();
+
+
+    // print gl versions
+    //const GLubyte *renderer = glGetString(GL_RENDERER);
+    //const GLubyte *vendor = glGetString(GL_VENDOR);
+    //const GLubyte *version = glGetString(GL_VERSION);
+    //const GLubyte *glslVersion =
+    //    glGetString(GL_SHADING_LANGUAGE_VERSION);
+
+    //GLint major, minor;
+    //glGetIntegerv(GL_MAJOR_VERSION, &major);
+    //glGetIntegerv(GL_MINOR_VERSION, &minor);
+
+    //printf("GL Vendor            : %s\n", vendor);
+    //printf("GL Renderer          : %s\n", renderer);
+    //printf("GL Version (string)  : %s\n", version);
+    //printf("GL Version (integer) : %d.%d\n", major, minor);
+    //printf("GLSL Version         : %s\n", glslVersion);
 }
 
 void Renderer::run()
 {
     addResources();
+    // Setup Dear ImGui context
+    if (gui)
+        gui->setUpContext(glfwWindow);
+
     shader->compile();
     shader->setAttrI("shadowMap", 0);
     shader->setAttrI("cubeDepthMap", 1);
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(glfwWindow))
@@ -71,8 +99,11 @@ void Renderer::run()
         lastFrame = currentFrame;
 
         // input
-        // -----
         processInput();
+
+        // start the dear ImGui frame
+        if (gui)
+            gui->show();
 
         // user render loop
         renderLoop();
@@ -102,8 +133,10 @@ void Renderer::run()
         renderObjects.clear();
         shaders.clear();
 
+        if(gui)
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(glfwWindow);
         glfwPollEvents();
 
@@ -155,6 +188,11 @@ void Renderer::addLight(string lightName, shared_ptr<Light> light)
 void Renderer::addShader(shared_ptr<Shader> shader_)
 {
     shader = shader_;
+}
+
+void Renderer::addGui(shared_ptr<Gui> gui_)
+{
+    gui = gui_;
 }
 
 void Renderer::setClearColor(vec3 color)
@@ -364,9 +402,14 @@ void Renderer::processInput()
     if (glfwGetKey(glfwWindow, GLFW_KEY_D) == GLFW_PRESS)
         camera->processKeyboard(CameraMovement::RIGHT, deltaTime);
 
-    if (glfwGetKey(glfwWindow, GLFW_KEY_SPACE) == GLFW_PRESS)
+    if (glfwGetKey(glfwWindow, GLFW_KEY_C) == GLFW_PRESS)
     {
         this->captureImg("capture.jpg");
         cout << "Image was saved at capture.jpg" << endl;
+    }
+
+    if (glfwGetKey(glfwWindow, GLFW_KEY_SPACE) == GLFW_PRESS)
+    {
+        window->setCursor(!window->getCursorState());
     }
 }

@@ -9,6 +9,7 @@ Window::Window()
     float lastX = windowWidth / 2.0f;
     float lastY = windowHeight / 2.0f;
     firstMouse = true;
+    enableCursor = false;
 
     glInit();
 }
@@ -21,6 +22,7 @@ Window::Window(std::string windowName, int width, int height)
     float lastX = windowWidth / 2.0f;
     float lastY = windowHeight / 2.0f;
     firstMouse = true;
+    enableCursor = false;
 
     glInit();
 }
@@ -28,6 +30,20 @@ Window::Window(std::string windowName, int width, int height)
 Window::~Window()
 {
     glfwTerminate();
+}
+
+void Window::setCursor(bool b)
+{
+    enableCursor = b;
+    if (b)
+    {
+        glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        firstMouse = true;
+    }
+    else
+    {
+        glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
 }
 
 void Window::framebuffer_size_callback(GLFWwindow * window, int width, int height)
@@ -42,6 +58,8 @@ void Window::framebuffer_size_callback(GLFWwindow * window, int width, int heigh
 void Window::mouse_callback(GLFWwindow * window, double xpos, double ypos)
 {
     Window *win = static_cast<Window*>(glfwGetWindowUserPointer(window));
+    if (win->enableCursor)
+        return;
 
     if (win->camera)
     {
@@ -74,8 +92,8 @@ void Window::scroll_callback(GLFWwindow * window, double xoffset, double yoffset
 bool Window::glInit()
 {    
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 #ifdef __APPLE__
@@ -109,4 +127,5 @@ bool Window::glInit()
         return -1;
     }
 
+    glfwSwapInterval(0); // disable vertical sync
 }

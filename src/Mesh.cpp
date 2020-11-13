@@ -15,6 +15,7 @@ Object::Object() :
 	modelMatrix(mat4(1.0f)),
 	transInvModelMatrix(mat4(1.0f))
 {
+	rotateAngle.resize(3, 0);
 }
 
 Object::~Object()
@@ -39,15 +40,47 @@ void Object::draw(shared_ptr<Shader> shader)
 
 }
 
-void Object::setPosition(glm::vec3 pos)
+void Object::setTransform(const vec3 & pos_, const vec3 & scale_, const vector<float>& rotation_)
+{
+	position = pos_;
+	scale = scale_;
+	rotateAngle = rotation_;
+	updateModelMatrix();
+}
+
+void Object::setPosition(const vec3& pos)
 {
 	position = pos;
 	updateModelMatrix();
 }
 
-void Object::setScale(glm::vec3 scale_)
+void Object::setScale(const vec3& scale_)
 {
 	scale = scale_;
+	updateModelMatrix();
+}
+
+void Object::setRotation(const vector<float>& rotation_)
+{
+	rotateAngle = rotation_;
+	updateModelMatrix();
+}
+
+void Object::setRotateX(float degree)
+{
+	rotateAngle[0] = degree;
+	updateModelMatrix();
+}
+
+void Object::setRotateY(float degree)
+{
+	rotateAngle[1] = degree;
+	updateModelMatrix();
+}
+
+void Object::setRotateZ(float degree)
+{
+	rotateAngle[2] = degree;
 	updateModelMatrix();
 }
 
@@ -82,6 +115,9 @@ void Object::updateModelMatrix()
 {
 	modelMatrix = glm::mat4(1.0f);
 	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::rotate(modelMatrix, radians(rotateAngle[0]), vec3(1, 0, 0));
+	modelMatrix = glm::rotate(modelMatrix, radians(rotateAngle[1]), vec3(0, 1, 0));
+	modelMatrix = glm::rotate(modelMatrix, radians(rotateAngle[2]), vec3(0, 0, 1));
 	modelMatrix = glm::scale(modelMatrix, scale);
 	transInvModelMatrix = glm::transpose(glm::inverse(modelMatrix));
 }

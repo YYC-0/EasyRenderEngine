@@ -16,6 +16,8 @@ public:
 	void setCamera(std::shared_ptr<Camera> camera) { this->camera = camera; }
 	int getWidth() { return windowWidth; }
 	int getHeight() { return windowHeight; }
+	bool getCursorState() { return enableCursor; }
+	void setCursor(bool b); // set if cursor is enable
 
 	// whenever the window size changed(by OS or user resize) this callback function executes
 	static void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -33,6 +35,7 @@ private:
 	int windowWidth;
 	int windowHeight;
 	std::string windowName;
+	bool enableCursor;
 
 	// for mouse and scroll event
 	std::shared_ptr<Camera> camera;
