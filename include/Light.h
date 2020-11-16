@@ -49,13 +49,13 @@ public:
 	void setAttenuation(float constant_, float linear_, float quadratic_);
 	virtual void setShaderAttr(std::shared_ptr<Shader> shader, int lightNum);
 
-private:
-	vec3 position;
-
 	// attenuation coefficient
 	float constant;
 	float linear;
 	float quadratic;
+private:
+	vec3 position;
+
 };
 
 // ¶¨Ïò¹â

@@ -1,12 +1,6 @@
 #include <iostream>
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../include/stb_image_write.h"
 #include "../include/Renderer.h"
 #include "../include/Utility.h"
-
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
 
 Renderer::Renderer() :
     window(nullptr),
@@ -206,35 +200,6 @@ void Renderer::setCamera(shared_ptr<Camera> camera_)
     window->setCamera(camera);
 }
 
-void Renderer::captureImg(string path)
-{
-    string suffix = Utility::getSuffix(path);
-
-    int width = window->getWidth();
-    int height = window->getHeight();
-    unsigned char* data = new unsigned char[3 * width * height];
-    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
-
-    stbi_flip_vertically_on_write(true);
-
-    if (suffix == "png")
-        stbi_write_png(path.c_str(), width, height, 3, data, 0);
-    else if(suffix == "jpg")
-        stbi_write_jpg(path.c_str(), width, height, 3, data, 100);
-    else if (suffix == "bmp")
-        stbi_write_bmp(path.c_str(), width, height, 3, data);
-    else if (suffix == "tga")
-        stbi_write_tga(path.c_str(), width, height, 3, data);
-    else if (suffix == "jpg")
-        stbi_write_jpg(path.c_str(), width, height, 3, data, 100);
-    else
-    {
-        cout << "Cannot save \"" << suffix << "\" format" << endl;
-    }
-
-    delete[] data;
-}
-
 void Renderer::renderShadowMap()
 {
     // render directional light shadow map
@@ -401,15 +366,11 @@ void Renderer::processInput()
         camera->processKeyboard(CameraMovement::LEFT, deltaTime);
     if (glfwGetKey(glfwWindow, GLFW_KEY_D) == GLFW_PRESS)
         camera->processKeyboard(CameraMovement::RIGHT, deltaTime);
+    
+    //if (glfwGetKey(glfwWindow, GLFW_KEY_C) == GLFW_PRESS)
+    //{
+    //    this->captureImg("capture.jpg");
+    //    cout << "Image was saved at capture.jpg" << endl;
+    //}
 
-    if (glfwGetKey(glfwWindow, GLFW_KEY_C) == GLFW_PRESS)
-    {
-        this->captureImg("capture.jpg");
-        cout << "Image was saved at capture.jpg" << endl;
-    }
-
-    if (glfwGetKey(glfwWindow, GLFW_KEY_SPACE) == GLFW_PRESS)
-    {
-        window->setCursor(!window->getCursorState());
-    }
 }

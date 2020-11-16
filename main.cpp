@@ -57,13 +57,16 @@ public:
         model->setPosition({ 0, 0, 0 });
 
         // sponza
-        //sponza = make_shared<Model>("./models/Sponza-master/sponza.obj");
-        //sponza->setScale({ 0.01, 0.01, 0.01 });
+        sponza = make_shared<Model>("./models/Sponza-master/sponza.obj");
+        sponza->setScale({ 0.01, 0.01, 0.01 });
 
         // Gui
         gui = make_shared<Gui>();
-        gui->addObject("cube", cube);
-        gui->addObject("plain", plane);
+        gui->add("cube", cube);
+        //gui->add("plain", plane);
+        gui->add("pointlight", pointLight);
+        gui->add("pointlight2", pointLight2);
+        //gui->add("dir light", directionalLight);
 
         // setting
         setClearColor(vec3(1, 1, 1));
@@ -74,9 +77,9 @@ public:
     virtual void addResources()
     {
         addObject("cube", cube);
-        addObject("plain", plane);
+        //addObject("plain", plane);
         //addObject("model", model);
-       // addObject("sponza", sponza);
+        addObject("sponza", sponza);
         //addLight("directionalLight", directionalLight);
        // addLight("directionalLight2", directionalLight2);
         addLight("pointLight", pointLight);
@@ -87,23 +90,14 @@ public:
 
     virtual void renderLoop()
     {
-        // light properties
-        glm::vec3 lightColor(1.0);
-        //lightColor.x = sin(glfwGetTime() * 2.0f);
-        //lightColor.y = sin(glfwGetTime() * 0.7f);
-        //lightColor.z = sin(glfwGetTime() * 1.3f);
-        pointLight->setColor(lightColor);
-        pointLight->setPosition(lightPos);
-
         //model->draw(shader);
-        //draw(sponza, shader);
+        draw(sponza, shader);
         //draw(model, shader);
         draw(cube, shader);
-        draw(plane, shader);
+        //draw(plane, shader);
     }
 
 private:
-    vec3 lightPos;
     int windowWidth;
     int windowHeight;
     vec3 lightDir;

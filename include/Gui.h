@@ -17,7 +17,8 @@ class Gui
 public:
 	Gui();
 	~Gui();
-	void addObject(string name, shared_ptr<Object> obj);
+	void add(string name, shared_ptr<Object> obj);
+	void add(string name, shared_ptr<Light> light);
 
 private:
 	friend class Renderer;
