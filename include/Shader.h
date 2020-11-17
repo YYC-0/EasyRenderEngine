@@ -4,12 +4,15 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <map>
+#include <memory>
 #include "Camera.h"
+using namespace std;
 
 class Shader
 {
 public:
-	unsigned int ID; // 程序ID
+	static std::shared_ptr<Shader> phong();
+	static std::shared_ptr<Shader> light();
 
 	// 从文件路径中获取顶点/片段着色器 并编译
 	Shader(std::string vertexPath, std::string fragmentPath, std::string geometryPath = "");
@@ -28,6 +31,8 @@ public:
 	void setCamera(const Camera& camera);
 
 private:
+	unsigned int ID; // program ID
+
 	std::string vertexPath;
 	std::string fragmentPath;
 	std::string geometryPath;

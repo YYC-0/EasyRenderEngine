@@ -78,9 +78,7 @@ void Renderer::run()
     if (gui)
         gui->setUpContext(glfwWindow);
 
-    shader->compile();
-    shader->setAttrI("shadowMap", 0);
-    shader->setAttrI("cubeDepthMap", 1);
+    //shader->compile();
 
     // render loop
     // -----------
@@ -105,15 +103,19 @@ void Renderer::run()
         // render shadow map
         renderShadowMap();
 
-        // set shader camera
-        shader->setCamera(*camera);
-
-        // set shader light
-        shader->setAttrI("lightNum", lights.size());
-        int n = 0;
-        for (auto light : lights)
+        // set shader uniforms
+        for (shared_ptr<Shader> shader : shaders)
         {
-               light.second->setShaderAttr(shader, n++);
+            // set shader camera
+            shader->setCamera(*camera);
+
+            // set shader light
+            shader->setAttrI("lightNum", lights.size());
+            int n = 0;
+            for (auto light : lights)
+            {
+                light.second->setShaderAttr(shader, n++);
+            }
         }
         
         // render
@@ -181,7 +183,7 @@ void Renderer::addLight(string lightName, shared_ptr<Light> light)
 
 void Renderer::addShader(shared_ptr<Shader> shader_)
 {
-    shader = shader_;
+    //shader = shader_;
 }
 
 void Renderer::addGui(shared_ptr<Gui> gui_)
@@ -217,7 +219,10 @@ void Renderer::renderShadowMap()
         lightView = lookAt(-dirLight->getDir() * vec3(20.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
         depthMapShader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
-        shader->setAttrMat4("lightSpaceMatrix["+ std::to_string(dirLightNum) + "]", lightSpaceMatrix);
+        for (shared_ptr<Shader> shader : shaders)
+        {
+            shader->setAttrMat4("lightSpaceMatrix[" + std::to_string(dirLightNum) + "]", lightSpaceMatrix);
+        }
 
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOs[dirLightNum]);
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -257,7 +262,10 @@ void Renderer::renderShadowMap()
         cubeDepthMapShader->setAttrF("far_plane", farPlane);
         cubeDepthMapShader->setAttrVec3("lightPos", pointLight->getPos());
         cubeDepthMapShader->setAttrI("lightNum", pointLightNum);
-        shader->setAttrF("far_plane", farPlane);
+        for (shared_ptr<Shader> shader : shaders)
+        {
+            shader->setAttrF("far_plane", farPlane);
+        }
 
         for (int i = 0; i < renderObjects.size(); ++i)
             renderObjects[i]->draw(cubeDepthMapShader);
@@ -355,22 +363,15 @@ void Renderer::renderLoop()
 
 void Renderer::processInput()
 {
-    if (glfwGetKey(glfwWindow, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(glfwWindow, true);
-
-    if (glfwGetKey(glfwWindow, GLFW_KEY_W) == GLFW_PRESS)
-        camera->processKeyboard(CameraMovement::FORWARD, deltaTime);
-    if (glfwGetKey(glfwWindow, GLFW_KEY_S) == GLFW_PRESS)
-        camera->processKeyboard(CameraMovement::BACKWARD, deltaTime);
-    if (glfwGetKey(glfwWindow, GLFW_KEY_A) == GLFW_PRESS)
-        camera->processKeyboard(CameraMovement::LEFT, deltaTime);
-    if (glfwGetKey(glfwWindow, GLFW_KEY_D) == GLFW_PRESS)
-        camera->processKeyboard(CameraMovement::RIGHT, deltaTime);
-    
-    //if (glfwGetKey(glfwWindow, GLFW_KEY_C) == GLFW_PRESS)
-    //{
-    //    this->captureImg("capture.jpg");
-    //    cout << "Image was saved at capture.jpg" << endl;
-    //}
-
+    if (window->getCursorState() == false)
+    {
+        if (glfwGetKey(glfwWindow, GLFW_KEY_W) == GLFW_PRESS)
+            camera->processKeyboard(CameraMovement::FORWARD, deltaTime);
+        if (glfwGetKey(glfwWindow, GLFW_KEY_S) == GLFW_PRESS)
+            camera->processKeyboard(CameraMovement::BACKWARD, deltaTime);
+        if (glfwGetKey(glfwWindow, GLFW_KEY_A) == GLFW_PRESS)
+            camera->processKeyboard(CameraMovement::LEFT, deltaTime);
+        if (glfwGetKey(glfwWindow, GLFW_KEY_D) == GLFW_PRESS)
+            camera->processKeyboard(CameraMovement::RIGHT, deltaTime);
+    }
 }

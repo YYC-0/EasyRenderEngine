@@ -7,13 +7,28 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-using namespace std;
+
+shared_ptr<Shader> Shader::phong()
+{
+	shared_ptr<Shader> shader = make_shared<Shader>("./shaders/phong.vert", "./shaders/phong.frag");
+
+	shader->setAttrI("shadowMap", 0);
+	shader->setAttrI("cubeDepthMap", 1);
+
+	return shader;
+}
+
+std::shared_ptr<Shader> Shader::light()
+{
+	return make_shared<Shader>("./shaders/light.vert", "./shaders/light.frag");
+}
 
 Shader::Shader(string vertexPath_, string fragmentPath_, string geometryPath_)
 {
 	vertexPath = vertexPath_;
 	fragmentPath = fragmentPath_;
 	geometryPath = geometryPath_;
+	compile();
 }
 
 void Shader::setAttrB(const std::string & name, bool value)

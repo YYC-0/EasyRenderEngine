@@ -37,8 +37,6 @@ public:
 	void setClearColor(vec3 color);
 	void setCamera(shared_ptr<Camera> camera_);
 
-	void captureImg(string path);
-
 
 private:
 	shared_ptr<Window> window;
@@ -83,6 +81,4 @@ private:
 	// GUI
 	shared_ptr<Gui> gui;
 
-	// will be removed (move to main())
-	shared_ptr<Shader> shader;
 };

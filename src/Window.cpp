@@ -137,12 +137,15 @@ void Window::mouseButtonCallback(GLFWwindow *window, int button, int action, int
 void Window::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     Window *win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-    
+
     switch (key)
     {
     case GLFW_KEY_SPACE:
         if(action == GLFW_PRESS)
             win->captureImg("capture.jpg");
+    case GLFW_KEY_ESCAPE:
+        if(action == GLFW_PRESS)
+            glfwSetWindowShouldClose(win->glfwWindow, true);
     default:
         break;
     }

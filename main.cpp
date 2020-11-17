@@ -36,7 +36,8 @@ public:
         pointLight2 = make_shared<PointLight>(vec3(7, 3, 0));
         pointLight2->setAttenuation(1.0f, 0.045f, 0.0075f);
         // create shader    
-        shader = make_shared<Shader>("./shaders/materials.vert", "./shaders/materials.frag");
+        shader = Shader::phong();
+        lightShader = Shader::light();
 
         // create meshes
         cube = make_shared<Cube>(1.0, 1.0, 1.0); // size
@@ -93,7 +94,7 @@ public:
         //model->draw(shader);
         draw(sponza, shader);
         //draw(model, shader);
-        draw(cube, shader);
+        draw(cube, lightShader);
         //draw(plane, shader);
     }
 
@@ -109,6 +110,7 @@ private:
     shared_ptr<PointLight> pointLight;
     shared_ptr<PointLight> pointLight2;
     shared_ptr<Shader> shader;
+    shared_ptr<Shader> lightShader;
 
     shared_ptr<Model> model;
     shared_ptr<Model> sponza;
