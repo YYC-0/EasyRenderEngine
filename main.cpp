@@ -9,6 +9,7 @@
 #include "include/Camera.h"
 #include "include/Window.h"
 #include "include/Renderer.h"
+#include "include/Skybox.h"
 
 #include <iostream>
 #include <memory>
@@ -61,6 +62,12 @@ public:
         sponza = make_shared<Model>("./models/Sponza-master/sponza.obj");
         sponza->setScale({ 0.01, 0.01, 0.01 });
 
+        // skybox
+        vector<string> skyboxPath{ "resources/skybox/right.jpg", "resources/skybox/left.jpg",
+            "resources/skybox/top.jpg", "resources/skybox/bottom.jpg",
+            "resources/skybox/front.jpg", "resources/skybox/back.jpg" };
+        skybox = make_shared<Skybox>(skyboxPath);
+
         // Gui
         gui = make_shared<Gui>();
         gui->add("cube", cube);
@@ -78,7 +85,7 @@ public:
     virtual void addResources()
     {
         addObject("cube", cube);
-        //addObject("plain", plane);
+        addObject("plain", plane);
         //addObject("model", model);
         addObject("sponza", sponza);
         //addLight("directionalLight", directionalLight);
@@ -86,6 +93,7 @@ public:
         addLight("pointLight", pointLight);
         addLight("pointLight2", pointLight2);
         addShader(shader);
+        addSkybox(skybox);
         addGui(gui);
     }
 
@@ -94,7 +102,7 @@ public:
         //model->draw(shader);
         draw(sponza, shader);
         //draw(model, shader);
-        draw(cube, lightShader);
+        draw(cube, shader);
         //draw(plane, shader);
     }
 
@@ -114,6 +122,8 @@ private:
 
     shared_ptr<Model> model;
     shared_ptr<Model> sponza;
+
+    shared_ptr<Skybox> skybox;
 
     shared_ptr<Gui> gui;
 };

@@ -204,13 +204,16 @@ void Cube::draw(shared_ptr<Shader> shader)
 		shader->setAttrMat4("model", modelMatrix);
 		shader->setAttrMat4("transInvModel", transInvModelMatrix);
 
-		shader->setAttrVec3("material.ambient", materials[i].ambient);
-		shader->setAttrVec3("material.diffuse", materials[i].diffuse);
-		shader->setAttrVec3("material.specular", materials[i].specular);
-		shader->setAttrF("shininess", materials[i].shininess);
-		shader->setAttrB("useDiffuseMap", materials[i].useDiffuseMap);
-		shader->setAttrB("useSpecularMap", materials[i].useSpecularMap);
-		shader->setAttrB("useNormalMap", materials[i].useNormalMap);
+		if (i < materials.size())
+		{
+			shader->setAttrVec3("material.ambient", materials[i].ambient);
+			shader->setAttrVec3("material.diffuse", materials[i].diffuse);
+			shader->setAttrVec3("material.specular", materials[i].specular);
+			shader->setAttrF("shininess", materials[i].shininess);
+			shader->setAttrB("useDiffuseMap", materials[i].useDiffuseMap);
+			shader->setAttrB("useSpecularMap", materials[i].useSpecularMap);
+			shader->setAttrB("useNormalMap", materials[i].useNormalMap);
+		}
 
 		shader->setAttrI("textures.diffuse", 2);
 		shader->setAttrI("textures.normal", 3);
@@ -220,20 +223,23 @@ void Cube::draw(shared_ptr<Shader> shader)
 
 
 		// texture
-		if (materials[i].useDiffuseMap)
+		if (i < materials.size())
 		{
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, materials[i].diffuseMap.getID());
-		}
-		if (materials[i].useNormalMap)
-		{
-			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, materials[i].normalMap.getID());
-		}
-		if (materials[i].useSpecularMap)
-		{
-			glActiveTexture(GL_TEXTURE4);
-			glBindTexture(GL_TEXTURE_2D, materials[i].specularMap.getID());
+			if (materials[i].useDiffuseMap)
+			{
+				glActiveTexture(GL_TEXTURE2);
+				glBindTexture(GL_TEXTURE_2D, materials[i].diffuseMap.getID());
+			}
+			if (materials[i].useNormalMap)
+			{
+				glActiveTexture(GL_TEXTURE3);
+				glBindTexture(GL_TEXTURE_2D, materials[i].normalMap.getID());
+			}
+			if (materials[i].useSpecularMap)
+			{
+				glActiveTexture(GL_TEXTURE4);
+				glBindTexture(GL_TEXTURE_2D, materials[i].specularMap.getID());
+			}
 		}
 
 		glBindVertexArray(VAOs[i]);

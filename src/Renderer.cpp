@@ -17,7 +17,8 @@ Renderer::Renderer() :
     lightFarPlane(100.0f),
     dirLightNumMax(5),
     pointLightNumMax(10),
-    gui(nullptr)
+    gui(nullptr),
+    skybox(nullptr)
 {
     depthMapFBOs.resize(dirLightNumMax, 0);
 }
@@ -45,9 +46,9 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
 
     // loading shader
     depthMapShader = make_shared<Shader>("./shaders/shadow_mapping.vert", "./shaders/shadow_mapping.frag");
-    depthMapShader->compile();
+    //depthMapShader->compile();
     cubeDepthMapShader = make_shared<Shader>("./shaders/point_shadows_depth.vert", "./shaders/point_shadows_depth.frag", "./shaders/point_shadows_depth.geom");
-    cubeDepthMapShader->compile();
+    //cubeDepthMapShader->compile();
 
     initShadowMap();
     initCubeShadowMap();
@@ -118,7 +119,7 @@ void Renderer::run()
             }
         }
         
-        // render
+        // render scene
         glViewport(0, 0, window->getWidth(), window->getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // draw objects
@@ -126,6 +127,16 @@ void Renderer::run()
         {
             renderObjects[i]->draw(shaders[i]);
         }
+        // draw skybox
+        if (skybox)
+        {
+            glDisable(GL_CULL_FACE);
+            mat4 projection = camera->getProjectionMatrix();
+            mat4 view = mat4(mat3(camera->getViewMatrix()));
+            skybox->draw(view, projection);
+            glEnable(GL_CULL_FACE);
+        }
+
         renderObjects.clear();
         shaders.clear();
 
@@ -184,6 +195,11 @@ void Renderer::addLight(string lightName, shared_ptr<Light> light)
 void Renderer::addShader(shared_ptr<Shader> shader_)
 {
     //shader = shader_;
+}
+
+void Renderer::addSkybox(shared_ptr<Skybox> skybox_)
+{
+    skybox = skybox_;
 }
 
 void Renderer::addGui(shared_ptr<Gui> gui_)
