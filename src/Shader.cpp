@@ -12,8 +12,6 @@ shared_ptr<Shader> Shader::phong()
 {
 	shared_ptr<Shader> shader = make_shared<Shader>("./shaders/phong.vert", "./shaders/phong.frag");
 
-	shader->setAttrI("shadowMap", 0);
-	shader->setAttrI("cubeDepthMap", 1);
 
 	return shader;
 }
@@ -28,6 +26,8 @@ Shader::Shader(string vertexPath_, string fragmentPath_, string geometryPath_)
 	vertexPath = vertexPath_;
 	fragmentPath = fragmentPath_;
 	geometryPath = geometryPath_;
+	setAttrI("shadowMap", 0);
+	setAttrI("cubeDepthMap", 1);
 	compile();
 }
 

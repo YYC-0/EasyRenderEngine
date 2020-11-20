@@ -39,6 +39,7 @@ public:
         // create shader    
         shader = Shader::phong();
         lightShader = Shader::light();
+        cartoonShader = make_shared<Shader>("Shaders/cartoon.vert", "Shaders/cartoon.frag");
 
         // create meshes
         cube = make_shared<Cube>(1.0, 1.0, 1.0); // size
@@ -56,7 +57,7 @@ public:
         //model->loadObj("./models/nanosuit/nanosuit.obj");
         //model->setScale({ 0.1,0.1,0.1 });
         model->loadObj("./models/suzanne/suzanne.obj");
-        model->setPosition({ 0, 0, 0 });
+        model->setPosition({ 0, 1, 0 });
 
         // sponza
         sponza = make_shared<Model>("./models/Sponza-master/sponza.obj");
@@ -74,6 +75,7 @@ public:
         //gui->add("plain", plane);
         gui->add("pointlight", pointLight);
         gui->add("pointlight2", pointLight2);
+        gui->add("monkey", model);
         //gui->add("dir light", directionalLight);
 
         // setting
@@ -86,13 +88,14 @@ public:
     {
         addObject("cube", cube);
         addObject("plain", plane);
-        //addObject("model", model);
+        addObject("model", model);
         addObject("sponza", sponza);
         //addLight("directionalLight", directionalLight);
        // addLight("directionalLight2", directionalLight2);
         addLight("pointLight", pointLight);
         addLight("pointLight2", pointLight2);
-        addShader(shader);
+        addShader("phong", shader);
+        addShader("cartoon", cartoonShader);
         addSkybox(skybox);
         addGui(gui);
     }
@@ -101,7 +104,7 @@ public:
     {
         //model->draw(shader);
         draw(sponza, shader);
-        //draw(model, shader);
+        draw(model, cartoonShader);
         draw(cube, shader);
         //draw(plane, shader);
     }
@@ -113,15 +116,17 @@ private:
     shared_ptr<Camera> camera;
     shared_ptr<Cube> cube;
     shared_ptr<Cube> plane;
+    shared_ptr<Model> model;
+    shared_ptr<Model> sponza;
+
     shared_ptr<DirectionalLight> directionalLight;
     shared_ptr<DirectionalLight> directionalLight2;
     shared_ptr<PointLight> pointLight;
     shared_ptr<PointLight> pointLight2;
+
     shared_ptr<Shader> shader;
     shared_ptr<Shader> lightShader;
-
-    shared_ptr<Model> model;
-    shared_ptr<Model> sponza;
+    shared_ptr<Shader> cartoonShader;
 
     shared_ptr<Skybox> skybox;
 

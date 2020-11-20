@@ -16,6 +16,7 @@ class Light
 {
 public:
 	Light();
+	virtual ~Light() {}
 
 	void setColor(vec3 color);
 	vec3 getColor() { return lightColor; }
@@ -47,7 +48,7 @@ public:
 	void setPosition(vec3 pos);
 	vec3 getPos() { return position; }
 	void setAttenuation(float constant_, float linear_, float quadratic_);
-	virtual void setShaderAttr(std::shared_ptr<Shader> shader, int lightNum);
+	virtual void setShaderAttr(std::shared_ptr<Shader> shader, int lightNum) override;
 
 	// attenuation coefficient
 	float constant;
@@ -67,7 +68,7 @@ public:
 
 	void setDir(vec3 dir);
 	vec3 getDir() { return direction; }
-	virtual void setShaderAttr(std::shared_ptr<Shader> shader, int lightNum);
+	virtual void setShaderAttr(std::shared_ptr<Shader> shader, int lightNum) override;
 
 private:
 	vec3 direction;

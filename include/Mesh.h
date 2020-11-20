@@ -22,7 +22,7 @@ class Object
 {
 public:
 	Object();
-	~Object();
+	virtual ~Object() = 0;
 
 	void setMaterial(Material m);
 	virtual void draw(shared_ptr<Shader> shader);
@@ -75,7 +75,8 @@ class Cube : public Object
 {
 public:
 	Cube(float length_ = 1.0f, float width_ = 1.0f, float height_ = 1.0f, vec3 pos = { 0,0,0 });
-	virtual void draw(shared_ptr<Shader> shader);
+	~Cube() {}
+	virtual void draw(shared_ptr<Shader> shader) override;
 
 private:
 	float length;
@@ -90,10 +91,11 @@ class Model : public Object
 public:
 	Model(vec3 position_ = { 0,0,0 }, vec3 scale_ = { 1.0,1.0,1.0 });
 	Model(const string &path);
+	~Model() {}
 
 	void loadObj(const string &path);	// load obj model
 
-	virtual void draw(shared_ptr<Shader> shader);
+	virtual void draw(shared_ptr<Shader> shader) override;
 
 private:
 	vector<string> materialName;

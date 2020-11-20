@@ -90,22 +90,21 @@ vec3 computeLight(Light light)
 //    else if(light.type == 1) // directional light
 //        lightDir = normalize(-light.direction);
     lightDir = normalize(light.type * (-light.direction) + (1-light.type) * (light.position - FragPos));
+    vec3 color;
+    if(useDiffuseMap)
+        color = texture(textures.diffuse, TexCoords).rgb;
+    else
+        color = material.ambient;
 
     // ambient
     vec3 ambient;
-    if(useDiffuseMap)
-        ambient = light.ambient * texture(textures.diffuse, TexCoords).rgb;
-    else
-        ambient = light.ambient * material.ambient;
+    ambient = light.ambient * color;
   	
     // diffuse 
     vec3 diffuse;
     vec3 norm = normalize(normal);
     float diff = max(dot(norm, lightDir), 0.0);
-    if(useDiffuseMap)
-        diffuse = light.diffuse * diff * texture(textures.diffuse, TexCoords).rgb;
-    else
-        diffuse = light.diffuse * (diff * material.diffuse);
+    diffuse = light.diffuse * diff * color;
     
     // specular
     vec3 specular;

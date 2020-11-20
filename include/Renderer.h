@@ -19,7 +19,7 @@ class Renderer
 {
 public:
 	Renderer();
-	~Renderer();
+	virtual ~Renderer();
 
 	void init(string windowName, int windowWidth, int windowHeight);
 	void run();
@@ -32,7 +32,7 @@ public:
 
 	void addObject(string meshName, shared_ptr<Object> mesh);
 	void addLight(string lightName, shared_ptr<Light> light);
-	void addShader(shared_ptr<Shader> shader_); // ´ýÐÞ¸Ä
+	void addShader(string shaderName, shared_ptr<Shader> shader_);
 	void addSkybox(shared_ptr<Skybox> skybox_);
 	void addGui(shared_ptr<Gui> gui_);
 
@@ -50,10 +50,11 @@ private:
 
 	// Resources
 	shared_ptr<Camera> camera;
-	map<string, shared_ptr<Object>> meshes;
+	map<string, shared_ptr<Object>> renderObjects;
 	map<string, shared_ptr<Light>> lights;
 	map<string, shared_ptr<DirectionalLight>> dirLights;
 	map<string, shared_ptr<PointLight>> pointLights;
+	map<string, shared_ptr<Shader>> shaders;
 
 	vec3 clearColor;
 
@@ -78,10 +79,6 @@ private:
 
 	// Skybox
 	shared_ptr<Skybox> skybox;
-
-	// render object
-	vector<shared_ptr<Object>> renderObjects;
-	vector<shared_ptr<Shader>> shaders;
 
 	// GUI
 	shared_ptr<Gui> gui;

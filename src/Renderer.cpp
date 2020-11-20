@@ -26,8 +26,8 @@ Renderer::Renderer() :
 
 Renderer::~Renderer()
 {
-    for(int i=0; i<depthMapFBOs.size(); ++i)
-        if(depthMapFBOs[i] != 0)
+    for (int i = 0; i < depthMapFBOs.size(); ++i)
+        if (depthMapFBOs[i] != 0)
             glDeleteFramebuffers(1, &depthMapFBOs[i]);
 
     glDeleteFramebuffers(1, &cubeDepthMapFBO);
@@ -98,22 +98,20 @@ void Renderer::run()
         if (gui)
             gui->show();
 
-        // user render loop
-        renderLoop();
-
         // render shadow map
         renderShadowMap();
 
         // set shader uniforms
-        for (shared_ptr<Shader> shader : shaders)
+        for (auto &shader_ : shaders)
         {
+            shared_ptr<Shader>& shader = shader_.second;
             // set shader camera
             shader->setCamera(*camera);
 
             // set shader light
             shader->setAttrI("lightNum", lights.size());
             int n = 0;
-            for (auto light : lights)
+            for (auto &light : lights)
             {
                 light.second->setShaderAttr(shader, n++);
             }
@@ -123,10 +121,9 @@ void Renderer::run()
         glViewport(0, 0, window->getWidth(), window->getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         // draw objects
-        for (int i=0; i<renderObjects.size(); ++i)
-        {
-            renderObjects[i]->draw(shaders[i]);
-        }
+        // user render loop
+        renderLoop();
+
         // draw skybox
         if (skybox)
         {
@@ -136,9 +133,6 @@ void Renderer::run()
             skybox->draw(view, projection);
             glEnable(GL_CULL_FACE);
         }
-
-        renderObjects.clear();
-        shaders.clear();
 
         if(gui)
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -154,8 +148,9 @@ void Renderer::run()
 
 void Renderer::draw(shared_ptr<Object> object, shared_ptr<Shader> shader)
 {
-    renderObjects.push_back(object);
-    shaders.push_back(shader);
+    //renderObjects.push_back(object);
+    object->draw(shader);
+    //shaders.push_back(shader);
 }
 
 void Renderer::addResources()
@@ -164,16 +159,16 @@ void Renderer::addResources()
 
 void Renderer::addObject(string meshName, shared_ptr<Object> mesh)
 {
-    auto iter = meshes.find(meshName);
+    auto iter = renderObjects.find(meshName);
     // mesh name already exists
-    if (iter != meshes.end())
+    if (iter != renderObjects.end())
     {
         cout << "Add Object Failed! Object name \"" << meshName << "\" already exists!" << endl;
         return;
     }
 
     mesh->bind();
-    meshes[meshName] = mesh;
+    renderObjects[meshName] = mesh;
 }
 
 void Renderer::addLight(string lightName, shared_ptr<Light> light)
@@ -192,9 +187,17 @@ void Renderer::addLight(string lightName, shared_ptr<Light> light)
         pointLights[lightName] = dynamic_pointer_cast<PointLight>(light);
 }
 
-void Renderer::addShader(shared_ptr<Shader> shader_)
+void Renderer::addShader(string shaderName, shared_ptr<Shader> shader_)
 {
-    //shader = shader_;
+    auto iter = shaders.find(shaderName);
+    // shader name already exists
+    if (iter != shaders.end())
+    {
+        cout << "Add Shader Failed! Shader name \"" << shaderName << "\" already exists!" << endl;
+        return;
+    }
+
+    shaders[shaderName] = shader_;
 }
 
 void Renderer::addSkybox(shared_ptr<Skybox> skybox_)
@@ -221,29 +224,30 @@ void Renderer::setCamera(shared_ptr<Camera> camera_)
 void Renderer::renderShadowMap()
 {
     // render directional light shadow map
-    glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     mat4 lightProjection, lightView;
     mat4 lightSpaceMatrix;
     int dirLightNum = 0;
     glCullFace(GL_FRONT); // use cull front face to avoid peter panning
     glViewport(0, 0, dirShadowWidth, dirShadowHeight);
-    for (auto light : dirLights)
+    for (auto &light : dirLights)
     {
         shared_ptr<DirectionalLight> dirLight = light.second;
         lightProjection = ortho(-40.0f, 40.0f, -40.0f, 40.0f, lightNearPlane, lightFarPlane);
         lightView = lookAt(-dirLight->getDir() * vec3(20.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
         depthMapShader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
-        for (shared_ptr<Shader> shader : shaders)
+        for (auto &shader_ : shaders)
         {
+            shared_ptr<Shader>& shader = shader_.second;
             shader->setAttrMat4("lightSpaceMatrix[" + std::to_string(dirLightNum) + "]", lightSpaceMatrix);
         }
 
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBOs[dirLightNum]);
         glClear(GL_DEPTH_BUFFER_BIT);
-        for (int i = 0; i < renderObjects.size(); ++i)
-            renderObjects[i]->draw(depthMapShader);
+        //for (int i = 0; i < renderObjects.size(); ++i)
+        //    renderObjects[i]->draw(depthMapShader);
+        for (auto &object : renderObjects)
+            object.second->draw(depthMapShader);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         dirLightNum++;
@@ -260,7 +264,7 @@ void Renderer::renderShadowMap()
     glViewport(0, 0, pointShadowWidth, pointShadowHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, cubeDepthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
-    for (auto light : pointLights)
+    for (auto &light : pointLights)
     {
         shared_ptr<PointLight> pointLight = light.second;
         GLfloat aspect = (GLfloat)pointShadowWidth / (GLfloat)pointShadowHeight;
@@ -278,13 +282,16 @@ void Renderer::renderShadowMap()
         cubeDepthMapShader->setAttrF("far_plane", farPlane);
         cubeDepthMapShader->setAttrVec3("lightPos", pointLight->getPos());
         cubeDepthMapShader->setAttrI("lightNum", pointLightNum);
-        for (shared_ptr<Shader> shader : shaders)
+        for (auto &shader_ : shaders)
         {
+            shared_ptr<Shader>& shader = shader_.second;
             shader->setAttrF("far_plane", farPlane);
         }
 
-        for (int i = 0; i < renderObjects.size(); ++i)
-            renderObjects[i]->draw(cubeDepthMapShader);
+        //for (int i = 0; i < renderObjects.size(); ++i)
+        //    renderObjects[i]->draw(cubeDepthMapShader);
+        for (auto &object : renderObjects)
+            object.second->draw(cubeDepthMapShader);
 
         pointLightNum++;
     }
@@ -299,7 +306,7 @@ void Renderer::renderShadowMap()
 void Renderer::initShadowMap()
 {
     // create depth map FBO
-    for(int i=0; i<dirLightNumMax; ++i)
+    for (int i = 0; i < dirLightNumMax; ++i)
         glGenFramebuffers(1, &depthMapFBOs[i]);
 
     // create depth texture
