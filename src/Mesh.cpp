@@ -445,29 +445,34 @@ void Model::loadObj(const string &path)
 		facesGroupsIdx_.push_back(faces);
 
 	// 转换格式
-	vertices = vertices_;
-	normals.resize(vertices.size());
-	texCoords.resize(vertices.size()); 
+	vertices.push_back(vec3(0));
+	normals.push_back(vec3(0));
+	texCoords.push_back(vec3(0));
+	tangents.push_back(vec3(0));
+	bitangents.push_back(vec3(0));
+	int indicesIdx = 1;
 	for (int i = 0; i < facesGroupsIdx_.size(); ++i)
 	{
 		vector<unsigned int> indices_;
 		for (int j = 0; j < facesGroupsIdx_[i].size(); ++j)
 		{
+			faceNum++;
 			Face f = facesGroupsIdx_[i][j];
-			int idx[3];
 			for (int k = 0; k < 3; ++k)
 			{
-				idx[k] = f[k].posIdx;
-				indices_.push_back(f[k].posIdx);
-				normals[f[k].posIdx] = normals_[f[k].nIdx];
-				texCoords[f[k].posIdx] = texCoords_[f[k].texIdx];
+				indices_.push_back(indicesIdx++);
+				vertices.push_back(vertices_[f[k].posIdx]);
+				normals.push_back(normals_[f[k].nIdx]);
+				texCoords.push_back(texCoords_[f[k].texIdx]);
 			}
-			faceNum++;
 
-			pair<vec3, vec3> tan = computeTB(vertices[idx[0]], vertices[idx[1]], vertices[idx[2]],
-				texCoords[idx[0]], texCoords[idx[1]], texCoords[idx[2]]);
-			tangents.push_back(tan.first);
-			bitangents.push_back(tan.second);
+			pair<vec3, vec3> tan = computeTB(vertices[indicesIdx-3], vertices[indicesIdx - 2], vertices[indicesIdx - 1],
+				texCoords[indicesIdx-3], texCoords[indicesIdx - 2], texCoords[indicesIdx - 1]);
+			for (int k = 0; k < 3; ++k)
+			{
+				tangents.push_back(tan.first);
+				bitangents.push_back(tan.second);
+			}
 		}
 		indices.push_back(indices_);
 	}
@@ -531,7 +536,7 @@ void Model::loadMaterialLib(string path)
 	{
 		cout << "Load file " << path << " fail" << endl;
 		return;
-	}			
+	}
 
 	string dir; // 当前目录
 	size_t pos = path.find_last_of("/");
@@ -577,26 +582,28 @@ void Model::loadMaterialLib(string path)
 		else if (tokens[0] == "map_Kd")
 		{
 			string texPath;
-			texPath = dir + tokens[1];
+			if (tokens[1].find(":") != string::npos)
+				texPath = tokens[1];
+			else
+				texPath = dir + tokens[1];
 			mtl.loadTexture(texPath, TextureType::Diffuse);
 		}
 		else if (tokens[0] == "map_Ks")
 		{
 			string texPath;
-			texPath = dir + tokens[1];
+			if (tokens[1].find(":") != string::npos)
+				texPath = tokens[1];
+			else
+				texPath = dir + tokens[1];
 			mtl.loadTexture(texPath, TextureType::Specular);
 		}
 		else if (tokens[0] == "map_Bump")
 		{
 			string texPath;
-			//size_t pos = tokens[1].find_first_of("\\");
-			//if (pos == string::npos)
-			//	pos = tokens[1].find_first_of("/");
-			//if (pos == string::npos)
-			//	texPath = dir + tokens[1];
-			//else
-			//	texPath = dir + tokens[1].substr(pos + 1, tokens[1].size());
-			texPath = dir + tokens[1];
+			if (tokens[1].find(":") != string::npos)
+				texPath = tokens[1];
+			else
+				texPath = dir + tokens[1];
 			mtl.loadTexture(texPath, TextureType::Normal);
 		}
 	}

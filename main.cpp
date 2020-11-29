@@ -56,8 +56,8 @@ public:
         model = make_shared<Model>();
         //model->loadObj("./models/nanosuit/nanosuit.obj");
         //model->setScale({ 0.1,0.1,0.1 });
-        model->loadObj("./models/suzanne/suzanne.obj");
-        model->setPosition({ 0, 1, 0 });
+        //model->loadObj("./models/test/cube2.obj");
+        //model->setPosition({ 0, 1, 0 });
 
         // sponza
         sponza = make_shared<Model>("./models/Sponza-master/sponza.obj");
@@ -79,32 +79,38 @@ public:
         //gui->add("dir light", directionalLight);
 
         // setting
-        setClearColor(vec3(1, 1, 1));
+        setClearColor(vec3(0, 0, 0));
         setCamera(camera);
 
     }
 
-    virtual void addResources()
+    virtual void addResources() override
     {
         addObject("cube", cube);
-        addObject("plain", plane);
-        addObject("model", model);
+        //addObject("plain", plane);
+        //addObject("model", model);
         addObject("sponza", sponza);
+
         //addLight("directionalLight", directionalLight);
        // addLight("directionalLight2", directionalLight2);
         addLight("pointLight", pointLight);
         addLight("pointLight2", pointLight2);
+
         addShader("phong", shader);
         addShader("cartoon", cartoonShader);
+
         addSkybox(skybox);
+
         addGui(gui);
     }
 
     virtual void renderLoop()
     {
         //model->draw(shader);
+        //draw(sponza, shader);
+        //draw(model, cartoonShader);
+        //draw(model, shader);
         draw(sponza, shader);
-        draw(model, cartoonShader);
         draw(cube, shader);
         //draw(plane, shader);
     }

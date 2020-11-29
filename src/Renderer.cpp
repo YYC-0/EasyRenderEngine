@@ -148,9 +148,7 @@ void Renderer::run()
 
 void Renderer::draw(shared_ptr<Object> object, shared_ptr<Shader> shader)
 {
-    //renderObjects.push_back(object);
     object->draw(shader);
-    //shaders.push_back(shader);
 }
 
 void Renderer::addResources()

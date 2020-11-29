@@ -103,12 +103,9 @@ void Camera::processMouseMovement(float xoffset, float yoffset, GLboolean constr
 
 void Camera::processMouseScroll(float yoffset)
 {
-	if (fov >= 1.0f && fov <= 45.0f)
-		fov -= yoffset;
-	if (fov <= 1.0f)
-		fov = 1.0f;
-	if (fov >= 45.0f)
-		fov = 45.0f;
+	float tmpSpeed = movementSpeed + yoffset;
+	if(tmpSpeed > 0)
+		movementSpeed = tmpSpeed;
 }
 
 void Camera::updateCameraVectors()
