@@ -43,6 +43,7 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE); // culling back face
+    glDisable(GL_MULTISAMPLE); // enable multisample anti-aliasing
 
     // loading shader
     depthMapShader = make_shared<Shader>("./shaders/shadow_mapping.vert", "./shaders/shadow_mapping.frag");
@@ -217,6 +218,14 @@ void Renderer::setCamera(shared_ptr<Camera> camera_)
 {
     camera = camera_;
     window->setCamera(camera);
+}
+
+void Renderer::setMSAA(bool b)
+{
+    if (b)
+        glEnable(GL_MULTISAMPLE);
+    else
+        glDisable(GL_MULTISAMPLE);
 }
 
 void Renderer::renderShadowMap()

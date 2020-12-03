@@ -38,6 +38,7 @@ public:
 
 	void setClearColor(vec3 color);
 	void setCamera(shared_ptr<Camera> camera_);
+	void setMSAA(bool b);
 
 
 private:
