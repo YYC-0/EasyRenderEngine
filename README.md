@@ -1,6 +1,6 @@
 # EasyRenderEngine
 
-**Not yet completed. ** 
+**Not yet completed.**  
 
 基于OpenGL实现了一个简易的可交互实时渲染引擎 
 
@@ -43,9 +43,9 @@ Note：
 
 
 
-![image-20201223105523454](README.assets/image-20201223105523454.png)
+![image-20201223105523454](images/sponza.png)
 
 
 
-![image-20201223110524735](README.assets/image-20201223110524735.png)
+![image-20201223110524735](images/monkey.png)
 
