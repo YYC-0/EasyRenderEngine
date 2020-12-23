@@ -5,11 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "include/Shader.h"
-#include "include/Camera.h"
-#include "include/Window.h"
 #include "include/Renderer.h"
-#include "include/Skybox.h"
 
 #include <iostream>
 #include <memory>
@@ -20,10 +16,10 @@ class myRenderer : public Renderer
 public:
     myRenderer()
     {
-        windowWidth = 1024;
-        windowHeight = 768;
-        // initalize window
-        init("TEST", windowWidth, windowHeight);
+        windowWidth = 1200;
+        windowHeight = 800;
+        // initalize window, should be called first
+        init("Sponza", windowWidth, windowHeight);
 
         // create camera
         float aspect = (float)windowWidth / (float)windowHeight;
@@ -31,33 +27,23 @@ public:
         // create light
         lightDir = vec3(0.2f, -1.0f, 0.2f);
         directionalLight = make_shared<DirectionalLight>(lightDir);
-        directionalLight2 = make_shared<DirectionalLight>(vec3(0.1,-1,0));
-        pointLight = make_shared<PointLight>(vec3(0, 3, 0));
+        pointLight = make_shared<PointLight>(vec3(11.0, 1.5, -2.7));
         pointLight->setAttenuation(1.0f, 0.045f, 0.0075f);
-        pointLight2 = make_shared<PointLight>(vec3(7, 3, 0));
+        pointLight2 = make_shared<PointLight>(vec3(10.4, 7.2, -3.7));
         pointLight2->setAttenuation(1.0f, 0.045f, 0.0075f);
+        pointLight3 = make_shared<PointLight>(vec3(-11.1, 2.6, -0.3));
+        pointLight3->setAttenuation(1.0f, 0.045f, 0.0075f);
+
         // create shader    
         shader = Shader::phong();
-        lightShader = Shader::light();
-        cartoonShader = make_shared<Shader>("Shaders/cartoon.vert", "Shaders/cartoon.frag");
 
         // create meshes
         cube = make_shared<Cube>(1.0, 1.0, 1.0); // size
-        plane = make_shared<Cube>(10.0, 0.02, 10.0);
         // ---cube material
         Material cubeMaterial, planeMaterial;
         cubeMaterial.loadTexture("./resources/brickwall.jpg", TextureType::Diffuse);
-        //cubeMaterial.loadTexture("./resources/container_specular.png", TextureType::Specular);
         cubeMaterial.loadTexture("./resources/brickwall_normal.jpg", TextureType::Normal);
         cube->setMaterial(cubeMaterial);
-        planeMaterial.loadTexture("./resources/grass.jpg", TextureType::Diffuse);
-        plane->setMaterial(planeMaterial);
-
-        model = make_shared<Model>();
-        //model->loadObj("./models/nanosuit/nanosuit.obj");
-        //model->setScale({ 0.1,0.1,0.1 });
-        //model->loadObj("./models/test/cube2.obj");
-        //model->setPosition({ 0, 1, 0 });
 
         // sponza
         sponza = make_shared<Model>("./models/Sponza-master/sponza.obj");
@@ -72,32 +58,30 @@ public:
         // Gui
         gui = make_shared<Gui>();
         gui->add("cube", cube);
-        //gui->add("plain", plane);
         gui->add("pointlight", pointLight);
         gui->add("pointlight2", pointLight2);
-        gui->add("monkey", model);
-        //gui->add("dir light", directionalLight);
+        gui->add("pointlight3", pointLight3);
+        gui->add("dirlight", directionalLight);
 
         // setting
-        setClearColor(vec3(0, 0, 0));
+        //setClearColor(vec3(0, 0, 0));
+        setClearColor(vec3(1.0, 1.0, 1.0));
         setCamera(camera);
+        setMSAA(true);
 
     }
 
     virtual void addResources() override
     {
         addObject("cube", cube);
-        //addObject("plain", plane);
-        //addObject("model", model);
         addObject("sponza", sponza);
 
-        //addLight("directionalLight", directionalLight);
-       // addLight("directionalLight2", directionalLight2);
+        addLight("directionalLight", directionalLight);
         addLight("pointLight", pointLight);
         addLight("pointLight2", pointLight2);
+        addLight("pointLight3", pointLight3);
 
         addShader("phong", shader);
-        addShader("cartoon", cartoonShader);
 
         addSkybox(skybox);
 
@@ -106,13 +90,8 @@ public:
 
     virtual void renderLoop()
     {
-        //model->draw(shader);
-        //draw(sponza, shader);
-        //draw(model, cartoonShader);
-        //draw(model, shader);
         draw(sponza, shader);
         draw(cube, shader);
-        //draw(plane, shader);
     }
 
 private:
@@ -121,18 +100,14 @@ private:
     vec3 lightDir;
     shared_ptr<Camera> camera;
     shared_ptr<Cube> cube;
-    shared_ptr<Cube> plane;
-    shared_ptr<Model> model;
     shared_ptr<Model> sponza;
 
     shared_ptr<DirectionalLight> directionalLight;
-    shared_ptr<DirectionalLight> directionalLight2;
     shared_ptr<PointLight> pointLight;
     shared_ptr<PointLight> pointLight2;
+    shared_ptr<PointLight> pointLight3;
 
     shared_ptr<Shader> shader;
-    shared_ptr<Shader> lightShader;
-    shared_ptr<Shader> cartoonShader;
 
     shared_ptr<Skybox> skybox;
 

@@ -43,7 +43,8 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE); // culling back face
-    glDisable(GL_MULTISAMPLE); // enable multisample anti-aliasing
+    glDisable(GL_MULTISAMPLE); // default disable multisample anti-aliasing
+    //glEnable(GL_FRAMEBUFFER_SRGB);
 
     // loading shader
     depthMapShader = make_shared<Shader>("./shaders/shadow_mapping.vert", "./shaders/shadow_mapping.frag");
@@ -121,6 +122,7 @@ void Renderer::run()
         // render scene
         glViewport(0, 0, window->getWidth(), window->getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0);
         // draw objects
         // user render loop
         renderLoop();
