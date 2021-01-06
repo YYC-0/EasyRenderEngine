@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <map>
 #include "Material.h"
 #include "Shader.h"
 using namespace std;
@@ -76,7 +77,7 @@ class Cube : public Object
 public:
 	Cube(float length_ = 1.0f, float width_ = 1.0f, float height_ = 1.0f, vec3 pos = { 0,0,0 });
 	~Cube() {}
-	virtual void draw(shared_ptr<Shader> shader) override;
+	//virtual void draw(shared_ptr<Shader> shader) override;
 
 private:
 	float length;
@@ -102,4 +103,21 @@ private:
 	map<string, Material> modelMaterials;
 	void loadMaterialLib(string path);
 	
+};
+
+class Sphere : public Object
+{
+public:
+	Sphere(float r, int detailLevel_ = 1, vec3 pos = { 0,0,0 });
+	~Sphere();
+
+private:
+	float radius;
+	float detailLevel;
+	int index;
+	map<pair<int, int>, int> middlePointIndexCache;
+
+	void create(int detail);
+	int addVertex(vec3 p);
+	int addMiddlePoint(int p1, int p2);
 };

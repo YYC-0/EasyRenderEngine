@@ -1,3 +1,5 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
 #include <fstream>
 #include <sstream>
@@ -37,7 +39,53 @@ void Object::setMaterial(Material m) // 待修改
 
 void Object::draw(shared_ptr<Shader> shader)
 {
+	for (int i = 0; i < indices.size(); ++i)
+	{
+		shader->setAttrMat4("model", modelMatrix);
+		shader->setAttrMat4("transInvModel", transInvModelMatrix);
 
+		if (i < materials.size())
+		{
+			shader->setAttrVec3("material.ambient", materials[i].ambient);
+			shader->setAttrVec3("material.diffuse", materials[i].diffuse);
+			shader->setAttrVec3("material.specular", materials[i].specular);
+			shader->setAttrF("shininess", materials[i].shininess);
+			shader->setAttrB("useDiffuseMap", materials[i].useDiffuseMap);
+			shader->setAttrB("useSpecularMap", materials[i].useSpecularMap);
+			shader->setAttrB("useNormalMap", materials[i].useNormalMap);
+		}
+
+		shader->setAttrI("textures.diffuse", 2);
+		shader->setAttrI("textures.normal", 3);
+		shader->setAttrI("textures.specular", 4);
+
+		shader->use();
+
+
+		// texture
+		if (i < materials.size())
+		{
+			if (materials[i].useDiffuseMap)
+			{
+				glActiveTexture(GL_TEXTURE2);
+				glBindTexture(GL_TEXTURE_2D, materials[i].diffuseMap.getID());
+			}
+			if (materials[i].useNormalMap)
+			{
+				glActiveTexture(GL_TEXTURE3);
+				glBindTexture(GL_TEXTURE_2D, materials[i].normalMap.getID());
+			}
+			if (materials[i].useSpecularMap)
+			{
+				glActiveTexture(GL_TEXTURE4);
+				glBindTexture(GL_TEXTURE_2D, materials[i].specularMap.getID());
+			}
+		}
+
+		glBindVertexArray(VAOs[i]);
+		glDrawElements(GL_TRIANGLES, indices[i].size(), GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
+	}
 }
 
 void Object::setTransform(const vec3 & pos_, const vec3 & scale_, const vector<float>& rotation_)
@@ -197,56 +245,9 @@ Cube::Cube(float length_, float width_, float height_, vec3 pos) :
 }
 
 
-void Cube::draw(shared_ptr<Shader> shader)
-{
-	for (int i = 0; i < indices.size(); ++i)
-	{
-		shader->setAttrMat4("model", modelMatrix);
-		shader->setAttrMat4("transInvModel", transInvModelMatrix);
-
-		if (i < materials.size())
-		{
-			shader->setAttrVec3("material.ambient", materials[i].ambient);
-			shader->setAttrVec3("material.diffuse", materials[i].diffuse);
-			shader->setAttrVec3("material.specular", materials[i].specular);
-			shader->setAttrF("shininess", materials[i].shininess);
-			shader->setAttrB("useDiffuseMap", materials[i].useDiffuseMap);
-			shader->setAttrB("useSpecularMap", materials[i].useSpecularMap);
-			shader->setAttrB("useNormalMap", materials[i].useNormalMap);
-		}
-
-		shader->setAttrI("textures.diffuse", 2);
-		shader->setAttrI("textures.normal", 3);
-		shader->setAttrI("textures.specular", 4);
-
-		shader->use();
-
-
-		// texture
-		if (i < materials.size())
-		{
-			if (materials[i].useDiffuseMap)
-			{
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, materials[i].diffuseMap.getID());
-			}
-			if (materials[i].useNormalMap)
-			{
-				glActiveTexture(GL_TEXTURE3);
-				glBindTexture(GL_TEXTURE_2D, materials[i].normalMap.getID());
-			}
-			if (materials[i].useSpecularMap)
-			{
-				glActiveTexture(GL_TEXTURE4);
-				glBindTexture(GL_TEXTURE_2D, materials[i].specularMap.getID());
-			}
-		}
-
-		glBindVertexArray(VAOs[i]);
-		glDrawElements(GL_TRIANGLES, indices[i].size(), GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
-	}
-}
+//void Cube::draw(shared_ptr<Shader> shader)
+//{
+//}
 
 void Cube::create()
 {
@@ -307,7 +308,7 @@ void Cube::create()
 		vec2{1,1}, vec2{0,1}, vec2{0,0},vec2{1,0}
 	};
 
-	faceNum = indices.size() / 3;
+	faceNum = indices[0].size() / 3;
 
 	// tangent bitangent
 	for (int i = 0; i < indices[0].size(); i += 3)
@@ -610,4 +611,152 @@ void Model::loadMaterialLib(string path)
 	if (mtlName != "")
 		modelMaterials[mtlName] = mtl;
 
+}
+
+// Creating an icosphere mesh
+// r is the ridius of sphere
+// detialLevel is the detail degree of sphere, [1, 10] 
+Sphere::Sphere(float r, int detailLevel_, vec3 pos) :
+	index(0),
+	radius(r),
+	detailLevel(detailLevel_)
+{
+	position = pos;
+	modelMatrix = glm::translate(modelMatrix, position);
+	if (detailLevel_ > 10)
+		detailLevel = 10;
+	else if (detailLevel_ < 1)
+		detailLevel = 1;
+	else
+		detailLevel = detailLevel_;
+
+	create(detailLevel);
+}
+
+Sphere::~Sphere()
+{
+}
+
+// http://blog.andreaskahler.com/2009/06/creating-icosphere-mesh-in-code.html
+void Sphere::create(int detail)
+{	
+	// vertex positions
+	float t = (1.0 + sqrt(5.0)) / 2.0; // golden radio
+	vector<vec3> v{
+		vec3(-1, t, 0),
+		vec3(1,  t, 0),
+		vec3(-1,-t, 0),
+		vec3(1, -t, 0),
+
+		vec3(0, -1, t),
+		vec3(0,  1, t),
+		vec3(0, -1, -t),
+		vec3(0,  1, -t),
+
+		vec3(t,  0, -1),
+		vec3(t,  0, 1),
+		vec3(-t, 0, -1),
+		vec3(-t, 0, 1)
+	};
+	for (vec3 &vertex : v)
+		addVertex(vertex);
+
+	// 每个三角形顶点的索引
+	vector<unsigned int> tempIndices{
+			0, 11, 5,
+			0, 5, 1,
+			0, 1, 7,
+			0, 7, 10,
+			0, 10, 11,
+			1, 5, 9,
+			5, 11, 4,
+			11, 10, 2,
+			10, 7, 6,
+			7, 1, 8,
+			3, 9, 4,
+			3, 4, 2,
+			3, 2, 6,
+			3, 6, 8,
+			3, 8, 9,
+			4, 9, 5,
+			2, 4, 11,
+			6, 2, 10,
+			8, 6, 7,
+			9, 8, 1
+	};
+
+	// refine triangles
+	for (int i = 1; i < detail; ++i)
+	{
+		vector<unsigned int> newIndices;
+		for (int j = 0; j < tempIndices.size(); j += 3)
+		{
+			unsigned int a = addMiddlePoint(tempIndices[j], tempIndices[j + 1]);
+			unsigned int b = addMiddlePoint(tempIndices[j+1], tempIndices[j + 2]);
+			unsigned int c = addMiddlePoint(tempIndices[j+2], tempIndices[j]);
+
+			vector<unsigned int> idxs{
+				tempIndices[j], a, c,
+				tempIndices[j + 1], b, a,
+				tempIndices[j + 2], c, b,
+				a, b, c
+			};
+			newIndices.insert(newIndices.end(), idxs.begin(), idxs.end());
+		}
+		tempIndices = newIndices;
+	}
+
+	indices.push_back(tempIndices);
+	faceNum = indices[0].size() / 3; 
+	normals = vertices;
+	// compute uv texcoords
+	for (int i = 0; i < vertices.size(); ++i)
+	{
+		float tu = asin(vertices[i].x) / M_PI + 0.5;
+		float tv = asin(vertices[i].y) / M_PI + 0.5;
+		texCoords.push_back(vec2(tu, tv));
+
+		vertices[i] = vertices[i] * radius;
+	}
+
+	// tangent bitangent
+	for (int i = 0; i < indices[0].size(); i += 3)
+	{
+		pair<vec3, vec3> tan = computeTB(vertices[indices[0][i]], vertices[indices[0][i + 1]], vertices[indices[0][i + 2]],
+			texCoords[indices[0][i]], texCoords[indices[0][i + 1]], texCoords[indices[0][i + 2]]);
+		for (int j = 0; j < 2; ++j)
+		{
+			tangents.push_back(tan.first);
+			bitangents.push_back(tan.second);
+		}
+	}
+}
+
+int Sphere::addVertex(vec3 p)
+{
+	double length = sqrt(p.x * p.x + p.y * p.y + p.z * p.z);
+	vertices.push_back(vec3(p.x/length, p.y/length, p.z/length));
+
+	return index++;
+}
+
+// return index of point in the middle of p1 and p2
+int Sphere::addMiddlePoint(int p1, int p2)
+{
+	int smallerIdx = p1 < p2 ? p1 : p2;
+	int greaterIdx = p1 < p2 ? p2 : p1;
+	pair<int, int> key{ smallerIdx, greaterIdx };
+	auto iter = middlePointIndexCache.find(key);
+	if (iter != middlePointIndexCache.end())
+		return iter->second;
+
+	vec3 point1 = vertices[p1];
+	vec3 point2 = vertices[p2];
+	vec3 middle = vec3((point1.x + point2.x) / 2.0,
+						(point1.y + point2.y) / 2.0,
+						(point1.z + point2.z) / 2.0);
+	int i = addVertex(middle);
+	middlePointIndexCache[key] = i;
+
+	return i;
 }
