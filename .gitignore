@@ -4,7 +4,8 @@ x64/
 *.vcxproj
 *.filters
 *.user
-models/
-resources/
 README.assets/
 main.cpp
+resources/pbr/
+resources/models/nanosuit/
+resources/models/suzanne/

@@ -1,4 +1,4 @@
-/*#include <glad/glad.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
@@ -46,7 +46,7 @@ public:
         cube->setMaterial(cubeMaterial);
 
         // sponza
-        sponza = make_shared<Model>("./models/Sponza-master/sponza.obj");
+        sponza = make_shared<Model>("./resources/models/Sponza-master/sponza.obj");
         sponza->setScale({ 0.01, 0.01, 0.01 });
 
         // skybox
@@ -121,4 +121,3 @@ int main()
 
     return 0;
 }
-*/
