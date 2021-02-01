@@ -39,48 +39,19 @@ void Object::setMaterial(Material m) // ´ýÐÞ¸Ä
 
 void Object::draw(shared_ptr<Shader> shader)
 {
+	shader->use();
+	shader->setAttrMat4("model", modelMatrix);
+	shader->setAttrMat4("transInvModel", transInvModelMatrix);
+	shader->setAttrI("textures.diffuse", 2);
+	shader->setAttrI("textures.normal", 3);
+	shader->setAttrI("textures.specular", 4);
+
 	for (int i = 0; i < indices.size(); ++i)
 	{
-		shader->setAttrMat4("model", modelMatrix);
-		shader->setAttrMat4("transInvModel", transInvModelMatrix);
-
 		if (i < materials.size())
-		{
-			shader->setAttrVec3("material.ambient", materials[i].ambient);
-			shader->setAttrVec3("material.diffuse", materials[i].diffuse);
-			shader->setAttrVec3("material.specular", materials[i].specular);
-			shader->setAttrF("shininess", materials[i].shininess);
-			shader->setAttrB("useDiffuseMap", materials[i].useDiffuseMap);
-			shader->setAttrB("useSpecularMap", materials[i].useSpecularMap);
-			shader->setAttrB("useNormalMap", materials[i].useNormalMap);
-		}
+			shader->setMeterial(materials[i]);
 
-		shader->setAttrI("textures.diffuse", 2);
-		shader->setAttrI("textures.normal", 3);
-		shader->setAttrI("textures.specular", 4);
-
-		shader->use();
-
-
-		// texture
-		if (i < materials.size())
-		{
-			if (materials[i].useDiffuseMap)
-			{
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, materials[i].diffuseMap.getID());
-			}
-			if (materials[i].useNormalMap)
-			{
-				glActiveTexture(GL_TEXTURE3);
-				glBindTexture(GL_TEXTURE_2D, materials[i].normalMap.getID());
-			}
-			if (materials[i].useSpecularMap)
-			{
-				glActiveTexture(GL_TEXTURE4);
-				glBindTexture(GL_TEXTURE_2D, materials[i].specularMap.getID());
-			}
-		}
+		shader->setAttributes();
 
 		glBindVertexArray(VAOs[i]);
 		glDrawElements(GL_TRIANGLES, indices[i].size(), GL_UNSIGNED_INT, 0);
@@ -481,45 +452,24 @@ void Model::loadObj(const string &path)
  
 void Model::draw(shared_ptr<Shader> shader)
 {
+	shader->use();
+
+	shader->setAttrMat4("model", modelMatrix);
+	shader->setAttrMat4("transInvModel", transInvModelMatrix);
+
+	shader->setAttrI("textures.diffuse", 2);
+	shader->setAttrI("textures.normal", 3);
+	shader->setAttrI("textures.specular", 4);
+
 	for (int i = 0; i < indices.size(); ++i)
 	{
-		Material mtl;
-		if(!modelMaterials.empty())
-			mtl = modelMaterials[materialName[i]];
+		Material &mtl = modelMaterials[materialName[i]];
+		//if(!modelMaterials.empty())
+		//	mtl = modelMaterials[materialName[i]];
 
-		shader->setAttrMat4("model", modelMatrix);
-		shader->setAttrMat4("transInvModel", transInvModelMatrix);
+		shader->setMeterial(mtl);
 
-		shader->setAttrVec3("material.ambient", mtl.ambient);
-		shader->setAttrVec3("material.diffuse", mtl.diffuse);
-		shader->setAttrVec3("material.specular", mtl.specular);
-		shader->setAttrF("shininess", mtl.shininess);
-		shader->setAttrB("useDiffuseMap", mtl.useDiffuseMap);
-		shader->setAttrB("useSpecularMap", mtl.useSpecularMap);
-		shader->setAttrB("useNormalMap", mtl.useNormalMap);
-
-		shader->setAttrI("textures.diffuse", 2);
-		shader->setAttrI("textures.normal", 3);
-		shader->setAttrI("textures.specular", 4);
-
-		shader->use();
-
-		// texture
-		if (mtl.useDiffuseMap)
-		{
-			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, mtl.diffuseMap.getID());
-		}
-		if (mtl.useNormalMap)
-		{
-			glActiveTexture(GL_TEXTURE3);
-			glBindTexture(GL_TEXTURE_2D, mtl.normalMap.getID());
-		}
-		if (mtl.useSpecularMap)
-		{
-			glActiveTexture(GL_TEXTURE4);
-			glBindTexture(GL_TEXTURE_2D, mtl.specularMap.getID());
-		}
+		shader->setAttributes();
 
 		glBindVertexArray(VAOs[i]);
 		glDrawElements(GL_TRIANGLES, indices[i].size(), GL_UNSIGNED_INT, 0);

@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include "Camera.h"
+#include "Material.h"
 using namespace std;
 
 class Shader
@@ -19,6 +20,7 @@ public:
 
 	void compile();
 	void use();
+	void setAttributes();
 
 	void setAttrB(const std::string &name, bool value);
 	void setAttrI(const std::string &name, int value);
@@ -29,6 +31,8 @@ public:
 	void setAttrVec3(const std::string &name, const glm::vec3 &value);
 	void setAttrVec4(const std::string &name, const glm::vec4 &value);
 	void setCamera(const Camera& camera);
+	void setMeterial(const Material &mtl);
+	void setPBRMeterial(const PBRMaterial &mtl);
 
 private:
 	unsigned int ID; // program ID

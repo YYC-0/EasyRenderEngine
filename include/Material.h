@@ -16,7 +16,7 @@ class Texture
 public:
 	Texture() = default;
 	bool load(string imgPath, TextureType type_);
-	unsigned int getID() { return id; }
+	unsigned int getID() const { return id; }
 
 private:
 	unsigned int id;

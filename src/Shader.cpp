@@ -80,6 +80,36 @@ void Shader::setCamera(const Camera &camera)
 	setAttrMat4("view", view);
 }
 
+// set material attributes 
+void Shader::setMeterial(const Material &mtl)
+{
+	setAttrVec3("material.ambient", mtl.ambient);
+	setAttrVec3("material.diffuse", mtl.diffuse);
+	setAttrVec3("material.specular", mtl.specular);
+	setAttrF("shininess", mtl.shininess);
+	setAttrB("useDiffuseMap", mtl.useDiffuseMap);
+	setAttrB("useSpecularMap", mtl.useSpecularMap);
+	setAttrB("useNormalMap", mtl.useNormalMap);
+
+
+	// textures
+	if (mtl.useDiffuseMap)
+	{
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, mtl.diffuseMap.getID());
+	}
+	if (mtl.useNormalMap)
+	{
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, mtl.normalMap.getID());
+	}
+	if (mtl.useSpecularMap)
+	{
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, mtl.specularMap.getID());
+	}
+}
+
 void Shader::compile()
 {
 	// 1. 从文件路径中获取顶点/片段着色器
@@ -192,7 +222,11 @@ void Shader::compile()
 void Shader::use()
 {
 	glUseProgram(ID);
+}
 
+// set shader's attributes
+void Shader::setAttributes()
+{
 	for (auto attrB : attributesBool)
 		setBool(attrB.first, attrB.second);
 	for (auto attrI : attributesInt)
