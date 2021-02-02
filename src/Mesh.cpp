@@ -29,19 +29,24 @@ Object::~Object()
 		glDeleteBuffers(1, &EBOs[i]);
 }
 
-void Object::setMaterial(Material m) // ´ýÐÞ¸Ä
+void Object::setMaterial(shared_ptr<Material> mtl)
 {
 	if (materials.empty())
-		materials.push_back(m);
+		materials.push_back(mtl);
 	else
-		materials[0] = m;
+	{
+		for (int i = 0; i < materials.size(); ++i)
+			materials[i] = mtl;
+	}
 }
 
 void Object::draw(shared_ptr<Shader> shader)
 {
 	shader->use();
+
 	shader->setAttrMat4("model", modelMatrix);
 	shader->setAttrMat4("transInvModel", transInvModelMatrix);
+
 	shader->setAttrI("textures.diffuse", 2);
 	shader->setAttrI("textures.normal", 3);
 	shader->setAttrI("textures.specular", 4);
@@ -463,7 +468,7 @@ void Model::draw(shared_ptr<Shader> shader)
 
 	for (int i = 0; i < indices.size(); ++i)
 	{
-		Material &mtl = modelMaterials[materialName[i]];
+		shared_ptr<Material> mtl = modelMaterials[materialName[i]];
 		//if(!modelMaterials.empty())
 		//	mtl = modelMaterials[materialName[i]];
 
@@ -495,7 +500,7 @@ void Model::loadMaterialLib(string path)
 		dir = path.substr(0, pos+1);
 
 	string line;
-	Material mtl;
+	shared_ptr<Material> mtl;
 	string mtlName;
 	while (!in.eof())
 	{
@@ -509,26 +514,27 @@ void Model::loadMaterialLib(string path)
 			if (mtlName != "")
 				modelMaterials[mtlName] = mtl;
 			mtlName = tokens[1];
-			mtl.init();
+			mtl = make_shared<Material>();
+			mtl->init();
 		}
 		else if (tokens[0] == "Ka")
 		{
 			for (int i = 0; i < 3; ++i)
-				mtl.ambient[i] = atof(tokens[i + 1].c_str());
+				mtl->ambient[i] = atof(tokens[i + 1].c_str());
 		}
 		else if (tokens[0] == "Kd")
 		{
 			for (int i = 0; i < 3; ++i)
-				mtl.diffuse[i] = atof(tokens[i + 1].c_str());
+				mtl->diffuse[i] = atof(tokens[i + 1].c_str());
 		}
 		else if (tokens[0] == "Ks")
 		{
 			for (int i = 0; i < 3; ++i)
-				mtl.specular[i] = atof(tokens[i + 1].c_str());
+				mtl->specular[i] = atof(tokens[i + 1].c_str());
 		}
 		else if (tokens[0] == "Ns")
 		{
-			mtl.shininess = atof(tokens[1].c_str());
+			mtl->shininess = atof(tokens[1].c_str());
 		}
 		else if (tokens[0] == "map_Kd")
 		{
@@ -537,7 +543,7 @@ void Model::loadMaterialLib(string path)
 				texPath = tokens[1];
 			else
 				texPath = dir + tokens[1];
-			mtl.loadTexture(texPath, TextureType::Diffuse);
+			mtl->loadTexture(texPath, TextureType::Diffuse);
 		}
 		else if (tokens[0] == "map_Ks")
 		{
@@ -546,7 +552,7 @@ void Model::loadMaterialLib(string path)
 				texPath = tokens[1];
 			else
 				texPath = dir + tokens[1];
-			mtl.loadTexture(texPath, TextureType::Specular);
+			mtl->loadTexture(texPath, TextureType::Specular);
 		}
 		else if (tokens[0] == "map_Bump")
 		{
@@ -555,7 +561,7 @@ void Model::loadMaterialLib(string path)
 				texPath = tokens[1];
 			else
 				texPath = dir + tokens[1];
-			mtl.loadTexture(texPath, TextureType::Normal);
+			mtl->loadTexture(texPath, TextureType::Normal);
 		}
 	}
 	if (mtlName != "")

@@ -41,7 +41,7 @@ in mat3 TBN;
 in vec4 FragPosLightSpace[5];   // frag position in directional light space
  
 uniform vec3 viewPos;
-uniform Material material;
+uniform Material mtl;
 uniform Texture textures;
 uniform Light lights[16];
 uniform int lightNum;
@@ -50,15 +50,15 @@ uniform samplerCubeArray cubeDepthMap;
 uniform float far_plane;
 
 vec3 computeLight(Light light);
-float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir);
-float pointShadowCalculation(vec3 fragPos, vec3 lightPos);
+float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, int dirLightNum);
+float pointShadowCalculation(vec3 fragPos, vec3 lightPos, int pointLightNum);
 
 int dirLightNum = 0;
 int pointLightNum = 0;
 vec3 normal;
 void main()
 {
-    normal = Normal;
+    normal = normalize(Normal);
     if(useNormalMap)
     {
         normal = texture(textures.normal, TexCoords).rgb;
@@ -94,7 +94,7 @@ vec3 computeLight(Light light)
     if(useDiffuseMap)
         color = texture(textures.diffuse, TexCoords).rgb;
     else
-        color = material.ambient;
+        color = mtl.ambient;
 
     // ambient
     vec3 ambient;
@@ -102,19 +102,18 @@ vec3 computeLight(Light light)
   	
     // diffuse 
     vec3 diffuse;
-    vec3 norm = normalize(normal);
-    float diff = max(dot(norm, lightDir), 0.0);
+    float diff = max(dot(normal, lightDir), 0.0);
     diffuse = light.diffuse * diff * color;
     
     // specular
     vec3 specular;
     vec3 viewDir = normalize(viewPos - FragPos);
-    vec3 reflectDir = reflect(-lightDir, norm);  
+    vec3 reflectDir = reflect(-lightDir, normal);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
     if(useSpecularMap)
         specular = light.specular * spec * texture(textures.specular, TexCoords).rgb;
     else
-        specular = light.specular * (spec * material.specular);  
+        specular = light.specular * (spec * mtl.specular);  
     
     float attenuation = 1.0;
     // shadow
@@ -124,12 +123,12 @@ vec3 computeLight(Light light)
         // attenuation
         float dis = length(light.position - FragPos);
         attenuation = 1.0 / (light.constant + light.linear*dis + light.quadratic*(dis*dis));
-        shadow = pointShadowCalculation(FragPos, light.position);
+        shadow = pointShadowCalculation(FragPos, light.position, pointLightNum);
         pointLightNum++;
     }
     else if(light.type == 1) // directional light
     {
-        shadow = dirShadowCalculation(FragPosLightSpace[dirLightNum], lightDir);
+        shadow = dirShadowCalculation(FragPosLightSpace[dirLightNum], lightDir, dirLightNum);
         dirLightNum++;
     }
 
@@ -139,7 +138,7 @@ vec3 computeLight(Light light)
     //return vec3(shadow, 0, 0);
 }
 
-float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir)
+float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, int dirLightNum)
 {
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     projCoords = projCoords * 0.5 + 0.5;
@@ -167,7 +166,7 @@ vec3 sampleOffsetDirections[20] = vec3[]
    vec3( 1,  0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1,  0, -1),
    vec3( 0,  1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0,  1, -1)
 );
-float pointShadowCalculation(vec3 fragPos, vec3 lightPos)
+float pointShadowCalculation(vec3 fragPos, vec3 lightPos, int pointLightNum)
 {
     vec3 fragToLight = fragPos - lightPos;
     //float closestDepth = texture(cubeDepthMap, fragToLight).r;

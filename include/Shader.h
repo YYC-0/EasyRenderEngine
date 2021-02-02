@@ -13,6 +13,7 @@ class Shader
 {
 public:
 	static std::shared_ptr<Shader> phong();
+	static std::shared_ptr<Shader> pbr();
 	static std::shared_ptr<Shader> light();
 
 	// 从文件路径中获取顶点/片段着色器 并编译
@@ -31,8 +32,8 @@ public:
 	void setAttrVec3(const std::string &name, const glm::vec3 &value);
 	void setAttrVec4(const std::string &name, const glm::vec4 &value);
 	void setCamera(const Camera& camera);
-	void setMeterial(const Material &mtl);
-	void setPBRMeterial(const PBRMaterial &mtl);
+	void setMeterial(shared_ptr<Material> mtl);
+	void setPBRMeterial(shared_ptr<PBRMaterial> mtl);
 
 private:
 	unsigned int ID; // program ID

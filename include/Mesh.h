@@ -25,7 +25,7 @@ public:
 	Object();
 	virtual ~Object() = 0;
 
-	void setMaterial(Material m);
+	void setMaterial(shared_ptr<Material> mtl);
 	virtual void draw(shared_ptr<Shader> shader);
 
 	void setTransform(const vec3& pos_, const vec3& scale_, const vector<float>& rotation_);
@@ -63,7 +63,8 @@ protected:
 	vector<glm::vec2> texCoords;
 	vector<glm::vec3> tangents;		// used for noraml map
 	vector<glm::vec3> bitangents;	// used for normal map
-	vector<Material> materials;
+
+	vector<shared_ptr<Material>> materials;
 
 	vector<float> transformToInterleavedData();
 
@@ -100,7 +101,7 @@ public:
 
 private:
 	vector<string> materialName;
-	map<string, Material> modelMaterials;
+	map<string, shared_ptr<Material>> modelMaterials;
 	void loadMaterialLib(string path);
 	
 };

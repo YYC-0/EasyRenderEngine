@@ -78,4 +78,5 @@ void Material::init()
 	useDiffuseMap = false;
 	useNormalMap = false;
 	useSpecularMap = false;
+	usePBR = false;
 }

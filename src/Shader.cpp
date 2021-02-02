@@ -6,13 +6,19 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <direct.h>
+#include  <stdio.h>  
 
 
 shared_ptr<Shader> Shader::phong()
 {
 	shared_ptr<Shader> shader = make_shared<Shader>("./shaders/phong.vert", "./shaders/phong.frag");
+	return shader;
+}
 
-
+std::shared_ptr<Shader> Shader::pbr()
+{
+	shared_ptr<Shader> shader = make_shared<Shader>("./shaders/phong.vert", "./shaders/pbr.frag");
 	return shader;
 }
 
@@ -81,33 +87,52 @@ void Shader::setCamera(const Camera &camera)
 }
 
 // set material attributes 
-void Shader::setMeterial(const Material &mtl)
+void Shader::setMeterial(shared_ptr<Material> mtl)
 {
-	setAttrVec3("material.ambient", mtl.ambient);
-	setAttrVec3("material.diffuse", mtl.diffuse);
-	setAttrVec3("material.specular", mtl.specular);
-	setAttrF("shininess", mtl.shininess);
-	setAttrB("useDiffuseMap", mtl.useDiffuseMap);
-	setAttrB("useSpecularMap", mtl.useSpecularMap);
-	setAttrB("useNormalMap", mtl.useNormalMap);
+	if (mtl->usePBR)
+	{
+		shared_ptr<PBRMaterial> pbrMtl = dynamic_pointer_cast<PBRMaterial>(mtl);
+		setPBRMeterial(pbrMtl);
+		return;
+	}
+
+	setAttrVec3("mtl.ambient", mtl->ambient);
+	setAttrVec3("mtl.diffuse", mtl->diffuse);
+	setAttrVec3("mtl.specular", mtl->specular);
+	setAttrF("shininess", mtl->shininess);
+	setAttrB("useDiffuseMap", mtl->useDiffuseMap);
+	setAttrB("useSpecularMap", mtl->useSpecularMap);
+	setAttrB("useNormalMap", mtl->useNormalMap);
 
 
 	// textures
-	if (mtl.useDiffuseMap)
+	if (mtl->useDiffuseMap)
 	{
 		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, mtl.diffuseMap.getID());
+		glBindTexture(GL_TEXTURE_2D, mtl->diffuseMap.getID());
 	}
-	if (mtl.useNormalMap)
+	if (mtl->useNormalMap)
 	{
 		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, mtl.normalMap.getID());
+		glBindTexture(GL_TEXTURE_2D, mtl->normalMap.getID());
 	}
-	if (mtl.useSpecularMap)
+	if (mtl->useSpecularMap)
 	{
 		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, mtl.specularMap.getID());
+		glBindTexture(GL_TEXTURE_2D, mtl->specularMap.getID());
 	}
+}
+
+void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
+{
+	vec3 albedo;		// RBG
+	float metallic;		// [0, 1]
+	float roughness;	// [0, 1]
+	float ao;
+	setAttrVec3("mtl.albedo", mtl->albedo);
+	setAttrF("mtl.metallic", mtl->metallic);
+	setAttrF("mtl.roughness", mtl->roughness);
+	setAttrF("mtl.ao", mtl->ao);
 }
 
 void Shader::compile()
@@ -128,6 +153,17 @@ void Shader::compile()
 	{
 		vShaderFile.open(vertexPath.c_str());
 		fShaderFile.open(fragmentPath.c_str());
+		bool success = true;
+		if (!vShaderFile.good())
+		{
+			cout << "Shader file " << vertexPath << " not exist!" << endl;
+			success = false;
+		}
+		if (!fShaderFile.good())
+		{
+			cout << "Shader file " << fragmentPath << " not exist!" << endl;
+			success = false;
+		}
 		// 读取文件的缓冲内容到数据流中
 		stringstream vShaderStream, fShaderStream;
 		vShaderStream << vShaderFile.rdbuf();
@@ -142,11 +178,18 @@ void Shader::compile()
 		if (geometryPath != "")
 		{
 			gShaderFile.open(geometryPath);
+			if (!gShaderFile.good())
+			{
+				cout << "Shader file " << geometryPath << " not exist!" << endl;
+				success = false;
+			}
 			std::stringstream gShaderStream;
 			gShaderStream << gShaderFile.rdbuf();
 			gShaderFile.close();
 			geometryCode = gShaderStream.str();
 		}
+		if (!success)
+			return;
 	}
 	catch (ifstream::failure a)
 	{
