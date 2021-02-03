@@ -8,7 +8,13 @@ enum class TextureType
 {
 	Diffuse,
 	Normal,
-	Specular
+	Specular,
+
+	// PBR
+	Albedo,
+	Metallic,
+	Roughness,
+	Ao
 };
 
 class Texture
@@ -32,7 +38,7 @@ public:
 		ambient(ambient_), diffuse(diffuse_), specular(specular_), shininess(shininess_),
 		useDiffuseMap(false), useNormalMap(false), useSpecularMap(false), usePBR(false) {}
 
-	void loadTexture(std::string path, TextureType type);
+	virtual void loadTexture(std::string path, TextureType type);
 	virtual void init();
 
 	bool useDiffuseMap;
@@ -55,12 +61,18 @@ public:
 class PBRMaterial : public Material
 {
 public:
-	PBRMaterial() {};
+	PBRMaterial() { init(); };
 	PBRMaterial(vec3 albedo_, float metallic_, float roughness_, float ao_) :
-		albedo(albedo_), metallic(metallic_), roughness(roughness_), ao(ao_) 
+		albedo(albedo_), metallic(metallic_), roughness(roughness_), ao(ao_),
+		useAlbedoMap(false), useNormalMap(false), useMetallicMap(false), 
+		useRoughnessMap(false), useAoMap(false)
 	{
 		usePBR = true;
 	}
+
+	virtual void loadTexture(std::string path, TextureType type);
+	void loadTextures(std::string fileFolderPath);
+	virtual void init() override;
 
 
 	vec3 albedo;		// RBG
@@ -68,9 +80,15 @@ public:
 	float roughness;	// [0, 1]
 	float ao;
 
-	Texture albedoT;
-	Texture normalT;
-	Texture matallicT;
-	Texture roughnessT;
-	Texture aoT;
+	bool useAlbedoMap;
+	bool useNormalMap;
+	bool useMetallicMap;
+	bool useRoughnessMap;
+	bool useAoMap;
+
+	Texture albedoMap;
+	Texture normalMap;
+	Texture metallicMap;
+	Texture roughnessMap;
+	Texture aoMap;
 };

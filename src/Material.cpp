@@ -80,3 +80,58 @@ void Material::init()
 	useSpecularMap = false;
 	usePBR = false;
 }
+
+void PBRMaterial::loadTexture(std::string path, TextureType type)
+{
+	switch (type)
+	{
+	case TextureType::Albedo:
+		albedoMap.load(path, TextureType::Albedo);
+		useAlbedoMap = true;
+		break;
+	case TextureType::Normal:
+		normalMap.load(path, TextureType::Normal);
+		useNormalMap = true;
+		break;
+	case TextureType::Metallic:
+		metallicMap.load(path, TextureType::Metallic);
+		useMetallicMap = true;
+		break;
+	case TextureType::Roughness:
+		roughnessMap.load(path, TextureType::Roughness);
+		useRoughnessMap = true;
+		break;
+	case TextureType::Ao:
+		aoMap.load(path, TextureType::Ao);
+		useAoMap = true;
+		break;
+	default:
+		break;
+	}
+}
+
+// input a file folder path
+// load file albedo.png, ao.png, metallic.png, normal.png, roughness.png
+void PBRMaterial::loadTextures(std::string fileFolderPath)
+{
+	loadTexture(fileFolderPath + "/albedo.png", TextureType::Albedo);
+	loadTexture(fileFolderPath + "/ao.png", TextureType::Ao);
+	loadTexture(fileFolderPath + "/metallic.png", TextureType::Metallic);
+	loadTexture(fileFolderPath + "/normal.png", TextureType::Normal);
+	loadTexture(fileFolderPath + "/roughness.png", TextureType::Roughness);
+}
+
+void PBRMaterial::init()
+{
+	albedo = vec3(1.0);		// RBG
+	metallic = 0.0f;		// [0, 1]
+	roughness = 1.0f;	// [0, 1]
+	ao = 1.0f;
+
+	usePBR = true;
+	useAlbedoMap = false;
+	useNormalMap = false;
+	useMetallicMap = false;
+	useRoughnessMap = false;
+	useAoMap = false;
+}

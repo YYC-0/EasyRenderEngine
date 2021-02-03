@@ -47,9 +47,6 @@ void Object::draw(shared_ptr<Shader> shader)
 	shader->setAttrMat4("model", modelMatrix);
 	shader->setAttrMat4("transInvModel", transInvModelMatrix);
 
-	shader->setAttrI("textures.diffuse", 2);
-	shader->setAttrI("textures.normal", 3);
-	shader->setAttrI("textures.specular", 4);
 
 	for (int i = 0; i < indices.size(); ++i)
 	{
@@ -462,10 +459,6 @@ void Model::draw(shared_ptr<Shader> shader)
 	shader->setAttrMat4("model", modelMatrix);
 	shader->setAttrMat4("transInvModel", transInvModelMatrix);
 
-	shader->setAttrI("textures.diffuse", 2);
-	shader->setAttrI("textures.normal", 3);
-	shader->setAttrI("textures.specular", 4);
-
 	for (int i = 0; i < indices.size(); ++i)
 	{
 		shared_ptr<Material> mtl = modelMaterials[materialName[i]];
@@ -663,29 +656,41 @@ void Sphere::create(int detail)
 	}
 
 	indices.push_back(tempIndices);
-	faceNum = indices[0].size() / 3; 
+	faceNum = tempIndices.size() / 3;
+
 	normals = vertices;
 	// compute uv texcoords
 	for (int i = 0; i < vertices.size(); ++i)
 	{
-		float tu = asin(vertices[i].x) / M_PI + 0.5;
-		float tv = asin(vertices[i].y) / M_PI + 0.5;
-		texCoords.push_back(vec2(tu, tv));
+		texCoords.push_back(computeUV(vertices[i]));
 
 		vertices[i] = vertices[i] * radius;
 	}
 
 	// tangent bitangent
+	tangents.resize(vertices.size());
+	bitangents.resize(vertices.size());
 	for (int i = 0; i < indices[0].size(); i += 3)
 	{
 		pair<vec3, vec3> tan = computeTB(vertices[indices[0][i]], vertices[indices[0][i + 1]], vertices[indices[0][i + 2]],
 			texCoords[indices[0][i]], texCoords[indices[0][i + 1]], texCoords[indices[0][i + 2]]);
-		for (int j = 0; j < 2; ++j)
-		{
-			tangents.push_back(tan.first);
-			bitangents.push_back(tan.second);
-		}
+
+		tangents[indices[0][i]] = tan.first;
+		bitangents[indices[0][i]] = tan.second;
+		tangents[indices[0][i+1]] = tan.first;
+		bitangents[indices[0][i+1]] = tan.second;
+		tangents[indices[0][i+2]] = tan.first;
+		bitangents[indices[0][i+2]] = tan.second;
 	}
+}
+
+// compute uv texcoords of a sphere surface point
+vec2 Sphere::computeUV(const vec3 &pos)
+{
+	//return vec2(asin(pos.x) / M_PI + 0.5, asin(pos.y) / M_PI + 0.5);
+	float u = 0.5 + atan2(pos.x, pos.z) / (2 * M_PI);
+	float v = 0.5 - asin(pos.y) / M_PI;
+	return vec2(u, v);
 }
 
 int Sphere::addVertex(vec3 p)

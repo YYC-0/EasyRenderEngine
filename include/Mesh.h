@@ -119,6 +119,7 @@ private:
 	map<pair<int, int>, int> middlePointIndexCache;
 
 	void create(int detail);
+	vec2 computeUV(const vec3 &pos);
 	int addVertex(vec3 p);
 	int addMiddlePoint(int p1, int p2);
 };

@@ -108,16 +108,19 @@ void Shader::setMeterial(shared_ptr<Material> mtl)
 	// textures
 	if (mtl->useDiffuseMap)
 	{
+		setAttrI("mtl.diffuseT", 2);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, mtl->diffuseMap.getID());
 	}
 	if (mtl->useNormalMap)
 	{
+		setAttrI("mtl.normalT", 3);
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, mtl->normalMap.getID());
 	}
 	if (mtl->useSpecularMap)
 	{
+		setAttrI("mtl.specularT", 4);
 		glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, mtl->specularMap.getID());
 	}
@@ -129,10 +132,53 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 	float metallic;		// [0, 1]
 	float roughness;	// [0, 1]
 	float ao;
-	setAttrVec3("mtl.albedo", mtl->albedo);
-	setAttrF("mtl.metallic", mtl->metallic);
-	setAttrF("mtl.roughness", mtl->roughness);
-	setAttrF("mtl.ao", mtl->ao);
+
+	setAttrB("useAlbedoMap", mtl->useAlbedoMap);
+	setAttrB("useNormalMap", mtl->useNormalMap);
+	setAttrB("useMatallicMap", mtl->useMetallicMap);
+	setAttrB("useRoughnessMap", mtl->useRoughnessMap);
+	setAttrB("useAoMap", mtl->useAoMap);
+
+	// textures
+	if (mtl->useAlbedoMap)
+	{
+		setAttrI("mtl.albedoT", 2);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, mtl->albedoMap.getID());
+	}
+	else
+		setAttrVec3("mtl.albedo", mtl->albedo);
+	if (mtl->useNormalMap)
+	{
+		setAttrI("mtl.normalT", 3);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, mtl->normalMap.getID());
+	}
+	if (mtl->useMetallicMap)
+	{
+		setAttrI("mtl.metallicT", 4);
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, mtl->metallicMap.getID());
+	}
+	else
+		setAttrF("mtl.metallic", mtl->metallic);
+	if (mtl->useRoughnessMap)
+	{
+		setAttrI("mtl.roughnessT", 5);
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, mtl->roughnessMap.getID());
+	}
+	else
+		setAttrF("mtl.roughness", mtl->roughness);
+	if (mtl->useAoMap)
+	{
+		setAttrI("mtl.aoT", 6);
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, mtl->aoMap.getID());
+	}
+	else
+		setAttrF("mtl.ao", mtl->ao);
+
 }
 
 void Shader::compile()
