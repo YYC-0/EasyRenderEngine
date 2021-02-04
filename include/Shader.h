@@ -22,6 +22,7 @@ public:
 	void compile();
 	void use();
 	void setAttributes();
+	void clear();
 
 	void setAttrB(const std::string &name, bool value);
 	void setAttrI(const std::string &name, int value);

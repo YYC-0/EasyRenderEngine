@@ -77,7 +77,7 @@ public:
 
 	vec3 albedo;		// RBG
 	float metallic;		// [0, 1]
-	float roughness;	// [0, 1]
+	float roughness;	// (0, 1]
 	float ao;
 
 	bool useAlbedoMap;

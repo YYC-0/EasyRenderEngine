@@ -334,6 +334,19 @@ void Shader::setAttributes()
 		setMat4(attrMat4.first, attrMat4.second);
 }
 
+// clear all attributes
+void Shader::clear()
+{
+	attributesBool.clear();
+	attributesInt.clear();
+	attributesFloat.clear();
+	attributesVec2.clear();
+	attributesVec3.clear();
+	attributesVec4.clear();
+	attributesMat4.clear();
+	attributesMat3.clear();
+}
+
 void Shader::setBool(const std::string &name, bool value) const
 {
 	glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);

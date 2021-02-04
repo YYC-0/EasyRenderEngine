@@ -81,8 +81,6 @@ void Renderer::run()
     if (gui)
         gui->setUpContext(glfwWindow);
 
-    //shader->compile();
-
     // render loop
     // -----------
     while (!glfwWindowShouldClose(glfwWindow))
@@ -130,11 +128,7 @@ void Renderer::run()
         // draw skybox
         if (skybox)
         {
-            glDisable(GL_CULL_FACE);
-            mat4 projection = camera->getProjectionMatrix();
-            mat4 view = mat4(mat3(camera->getViewMatrix()));
-            skybox->draw(view, projection);
-            glEnable(GL_CULL_FACE);
+            skybox->drawAsSkybox(mat4(mat3(camera->getViewMatrix())), camera->getProjectionMatrix());
         }
 
         if(gui)
@@ -201,7 +195,7 @@ void Renderer::addShader(string shaderName, shared_ptr<Shader> shader_)
     shaders[shaderName] = shader_;
 }
 
-void Renderer::addSkybox(shared_ptr<Skybox> skybox_)
+void Renderer::addSkybox(shared_ptr<CubeMap> skybox_)
 {
     skybox = skybox_;
 }
@@ -374,7 +368,6 @@ void Renderer::initCubeShadowMap()
         std::cout << "Point light shadow framebuffer not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
-
 
 void Renderer::renderLoop()
 {

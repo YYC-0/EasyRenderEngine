@@ -6,18 +6,16 @@ uniform float shininess;
 struct Material {
     vec3 ambient;
     vec3 diffuse;
-    vec3 specular;    
+    vec3 specular;   
+
+    sampler2D diffuseT;
+    sampler2D normalT;
+    sampler2D specularT; 
 };
 
 uniform bool useDiffuseMap;
 uniform bool useSpecularMap;
 uniform bool useNormalMap;
-
-struct Texture {
-    sampler2D diffuse;
-    sampler2D normal;
-    sampler2D specular;
-};
 
 struct Light {
     int type;
@@ -42,14 +40,13 @@ in vec4 FragPosLightSpace[5];   // frag position in directional light space
  
 uniform vec3 viewPos;
 uniform Material mtl;
-uniform Texture textures;
 uniform Light lights[16];
 uniform int lightNum;
 uniform sampler2DArray shadowMap;
 uniform samplerCubeArray cubeDepthMap;
 uniform float far_plane;
 
-vec3 computeLight(Light light);
+vec3 computeLight(Light light, vec3 objDiffuse, vec3 objSpecular);
 float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, int dirLightNum);
 float pointShadowCalculation(vec3 fragPos, vec3 lightPos, int pointLightNum);
 
@@ -61,16 +58,26 @@ void main()
     normal = normalize(Normal);
     if(useNormalMap)
     {
-        normal = texture(textures.normal, TexCoords).rgb;
+        normal = texture(mtl.normalT, TexCoords).rgb;
         normal = normalize(normal * 2.0 - 1.0);
         normal = normalize(TBN * normal);
     }
 //    FragColor = vec4(normal, 1.0);
+    vec3 objDiffuse;
+    vec3 objSpecular;
+    if(useDiffuseMap)
+        objDiffuse = texture(mtl.diffuseT, TexCoords).rgb;
+    else
+        objDiffuse = mtl.ambient;
+    if(useSpecularMap)
+        objSpecular = texture(mtl.specularT, TexCoords).rgb;
+    else
+        objSpecular = mtl.specular;
 
     vec3 result;
     for(int i=0; i<lightNum; ++i)
     {
-        result += computeLight(lights[i]);
+        result += computeLight(lights[i], objDiffuse, objSpecular);
     }
     
     FragColor = vec4(result, 1.0);
@@ -82,7 +89,7 @@ void main()
 
 } 
 
-vec3 computeLight(Light light)
+vec3 computeLight(Light light, vec3 objDiffuse, vec3 objSpecular)
 {
     vec3 lightDir;
 //    if(light.type == 0) // point light
@@ -90,30 +97,22 @@ vec3 computeLight(Light light)
 //    else if(light.type == 1) // directional light
 //        lightDir = normalize(-light.direction);
     lightDir = normalize(light.type * (-light.direction) + (1-light.type) * (light.position - FragPos));
-    vec3 color;
-    if(useDiffuseMap)
-        color = texture(textures.diffuse, TexCoords).rgb;
-    else
-        color = mtl.ambient;
 
     // ambient
     vec3 ambient;
-    ambient = light.ambient * color;
+    ambient = light.ambient * objDiffuse;
   	
     // diffuse 
     vec3 diffuse;
     float diff = max(dot(normal, lightDir), 0.0);
-    diffuse = light.diffuse * diff * color;
+    diffuse = light.diffuse * diff * objDiffuse;
     
     // specular
     vec3 specular;
     vec3 viewDir = normalize(viewPos - FragPos);
     vec3 reflectDir = reflect(-lightDir, normal);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
-    if(useSpecularMap)
-        specular = light.specular * spec * texture(textures.specular, TexCoords).rgb;
-    else
-        specular = light.specular * (spec * mtl.specular);  
+    specular = light.specular * spec * objSpecular;  
     
     float attenuation = 1.0;
     // shadow

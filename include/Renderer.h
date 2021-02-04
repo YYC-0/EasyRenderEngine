@@ -10,7 +10,7 @@
 #include "Window.h"
 #include "Mesh.h"
 #include "Light.h"
-#include "Skybox.h"
+#include "CubeMap.h"
 #include "Gui.h"
 
 using namespace std;
@@ -33,7 +33,7 @@ public:
 	void addObject(string meshName, shared_ptr<Object> mesh);
 	void addLight(string lightName, shared_ptr<Light> light);
 	void addShader(string shaderName, shared_ptr<Shader> shader_);
-	void addSkybox(shared_ptr<Skybox> skybox_);
+	void addSkybox(shared_ptr<CubeMap> skybox_);
 	void addGui(shared_ptr<Gui> gui_);
 
 	void setClearColor(vec3 color);
@@ -79,7 +79,7 @@ private:
 	GLfloat lightFarPlane;
 
 	// Skybox
-	shared_ptr<Skybox> skybox;
+	shared_ptr<CubeMap> skybox;
 
 	// GUI
 	shared_ptr<Gui> gui;
