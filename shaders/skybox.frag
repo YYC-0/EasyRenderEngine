@@ -4,7 +4,7 @@ out vec4 FragColor;
 in vec3 TexCoords;
 
 uniform samplerCube skybox;
-uniform bool isHDR;
+uniform bool gammaCorrection;
 
 void main()
 {    
@@ -12,7 +12,7 @@ void main()
     vec3 color = texture(skybox, TexCoords).rgb;
     
     // HDR tonemap and gamma correct
-    if(isHDR)
+    if(gammaCorrection)
     {
         color = color / (color + vec3(1.0));
         color = pow(color, vec3(1.0/2.2)); 

@@ -138,6 +138,7 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 	setAttrB("useMatallicMap", mtl->useMetallicMap);
 	setAttrB("useRoughnessMap", mtl->useRoughnessMap);
 	setAttrB("useAoMap", mtl->useAoMap);
+	setAttrB("useIrradianceMap", mtl->useIrradianceMap);
 
 	// textures
 	if (mtl->useAlbedoMap)
@@ -178,6 +179,12 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 	}
 	else
 		setAttrF("mtl.ao", mtl->ao);
+	if (mtl->useIrradianceMap)
+	{
+		setAttrI("mtl.irradianceMap", 7);
+		glActiveTexture(GL_TEXTURE7);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, mtl->irradianceMap.getID());
+	}
 
 }
 

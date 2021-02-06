@@ -17,17 +17,24 @@ public:
 	//~CubeMap();
 
 	void load(const vector<string>& facesPath);
-	void loadHdr(const string &path);
+	void loadHdr(const string &path, int resolution = 512);
 	void drawAsSkybox(const glm::mat4& view, const glm::mat4& projection);
-	void setHDR(bool b) { isHDR = b; }
+	void setGammaCorrection(bool b) { gammaCorrection = b; }
+	void generateIrradianceMap();
+
+	unsigned int getCubeMapID() { return cubeMapID; }
+	unsigned int getIrradianceMapID() { return irradianceMapID; }
 
 	Cube box;
 private:
 	void init();
 
-	bool isHDR;
-	GLuint cubeMapID;
+	bool gammaCorrection;
+	unsigned int cubeMapID;
+	unsigned int irradianceMapID;
 	unsigned int hdrTexture;
 	shared_ptr<Shader> skyboxShader;
-	shared_ptr<Shader> equirectangularToCubemapShader;
+
+	glm::mat4 captureProjection;
+	vector<glm::mat4> captureViews;
 };

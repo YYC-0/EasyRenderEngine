@@ -121,6 +121,12 @@ void PBRMaterial::loadTextures(std::string fileFolderPath)
 	loadTexture(fileFolderPath + "/roughness.png", TextureType::Roughness);
 }
 
+void PBRMaterial::setIrradianceMap(Texture T)
+{
+	useIrradianceMap = true;
+	irradianceMap = T;
+}
+
 void PBRMaterial::init()
 {
 	albedo = vec3(1.0);		// RBG
@@ -134,4 +140,5 @@ void PBRMaterial::init()
 	useMetallicMap = false;
 	useRoughnessMap = false;
 	useAoMap = false;
+	useIrradianceMap = false;
 }

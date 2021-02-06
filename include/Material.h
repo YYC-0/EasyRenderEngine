@@ -14,13 +14,18 @@ enum class TextureType
 	Albedo,
 	Metallic,
 	Roughness,
-	Ao
+	Ao,
+	Irradiance,
+
+	Else
 };
 
 class Texture
 {
 public:
 	Texture() = default;
+	Texture(unsigned int id_, TextureType type_) :
+		id(id_), type(type_) {}
 	bool load(string imgPath, TextureType type_);
 	unsigned int getID() const { return id; }
 
@@ -65,13 +70,14 @@ public:
 	PBRMaterial(vec3 albedo_, float metallic_, float roughness_, float ao_) :
 		albedo(albedo_), metallic(metallic_), roughness(roughness_), ao(ao_),
 		useAlbedoMap(false), useNormalMap(false), useMetallicMap(false), 
-		useRoughnessMap(false), useAoMap(false)
+		useRoughnessMap(false), useAoMap(false), useIrradianceMap(false)
 	{
 		usePBR = true;
 	}
 
 	virtual void loadTexture(std::string path, TextureType type);
 	void loadTextures(std::string fileFolderPath);
+	void setIrradianceMap(Texture T);
 	virtual void init() override;
 
 
@@ -85,10 +91,12 @@ public:
 	bool useMetallicMap;
 	bool useRoughnessMap;
 	bool useAoMap;
+	bool useIrradianceMap;
 
 	Texture albedoMap;
 	Texture normalMap;
 	Texture metallicMap;
 	Texture roughnessMap;
 	Texture aoMap;
+	Texture irradianceMap;
 };
