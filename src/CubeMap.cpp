@@ -133,7 +133,7 @@ void CubeMap::drawAsSkybox(const glm::mat4 & view, const glm::mat4 & projection)
     skyboxShader->setAttrMat4("projection", projection);
     skyboxShader->setAttrB("gammaCorrection", gammaCorrection);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMapID);
 
     box.draw(skyboxShader);
 
@@ -179,6 +179,79 @@ void CubeMap::generateIrradianceMap()
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glEnable(GL_CULL_FACE);
+
+}
+
+// generate prefilter map for specular IBL
+void CubeMap::generatePrefilterMap()
+{
+    glGenTextures(1, &prefilterMapID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMapID);
+    for (unsigned int i = 0; i < 6; ++i)
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB16F, 128, 128, 0, GL_RGB, GL_FLOAT, nullptr);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // be sure to set minification filter to mip_linear 
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // generate mipmaps for the cubemap so OpenGL automatically allocates the required memory.
+    glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+
+    unsigned int captureFBO;
+    glGenFramebuffers(1, &captureFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
+
+    shared_ptr<Shader> prefilterShader = make_shared<Shader>("Shaders/cube_map.vert", "Shaders/prefilter.frag");
+    prefilterShader->use();
+    prefilterShader->setAttrI("environmentMap", 0);
+    prefilterShader->setAttrMat4("projection", captureProjection);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapID);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    unsigned int maxMipLevels = 5;
+    glDisable(GL_CULL_FACE); 
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    for (unsigned int mip = 0; mip < maxMipLevels; ++mip)
+    {
+        unsigned int mipWidth = 128 * pow(0.5, mip);
+        unsigned int mipHeight = 128 * pow(0.5, mip);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, mipWidth, mipHeight);
+        glViewport(0, 0, mipWidth, mipHeight);
+
+        float roughness = (float)mip / (float)(maxMipLevels - 1);
+        prefilterShader->setAttrF("roughness", roughness);
+
+        for (unsigned int i = 0; i < 6; ++i)
+        {
+            prefilterShader->setAttrMat4("view", captureViews[i]);
+            glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterMapID, mip);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            box.draw(prefilterShader);
+        }
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glEnable(GL_CULL_FACE);
+}
+
+void CubeMap::generateBrdfLUTTexture()
+{
+    glGenTextures(1, &brdfLUTTexture);
+
+    glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    unsigned int captureFBO;
+    glGenFramebuffers(1, &captureFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
 
 }
 
