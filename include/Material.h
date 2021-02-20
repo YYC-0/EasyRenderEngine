@@ -43,6 +43,7 @@ public:
 		ambient(ambient_), diffuse(diffuse_), specular(specular_), shininess(shininess_),
 		useDiffuseMap(false), useNormalMap(false), useSpecularMap(false), usePBR(false) {}
 
+	void setTexture(Texture texture, TextureType type);
 	virtual void loadTexture(std::string path, TextureType type);
 	virtual void init();
 
@@ -70,7 +71,7 @@ public:
 	PBRMaterial(vec3 albedo_, float metallic_, float roughness_, float ao_) :
 		albedo(albedo_), metallic(metallic_), roughness(roughness_), ao(ao_),
 		useAlbedoMap(false), useNormalMap(false), useMetallicMap(false), 
-		useRoughnessMap(false), useAoMap(false), useIrradianceMap(false)
+		useRoughnessMap(false), useAoMap(false)
 	{
 		usePBR = true;
 	}
@@ -78,6 +79,8 @@ public:
 	virtual void loadTexture(std::string path, TextureType type);
 	void loadTextures(std::string fileFolderPath);
 	void setIrradianceMap(Texture T);
+	void setPrefilterMap(Texture T) { prefilterMap = T; }
+	void setBrdfLUT(Texture T) { brdfLUT = T; }
 	virtual void init() override;
 
 
@@ -91,7 +94,6 @@ public:
 	bool useMetallicMap;
 	bool useRoughnessMap;
 	bool useAoMap;
-	bool useIrradianceMap;
 
 	Texture albedoMap;
 	Texture normalMap;
@@ -99,4 +101,6 @@ public:
 	Texture roughnessMap;
 	Texture aoMap;
 	Texture irradianceMap;
+	Texture prefilterMap;
+	Texture brdfLUT;
 };

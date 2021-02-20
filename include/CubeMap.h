@@ -27,6 +27,7 @@ public:
 	unsigned int getCubeMapID() { return cubeMapID; }
 	unsigned int getIrradianceMapID() { return irradianceMapID; }
 	unsigned int getPrefilterMapID() { return prefilterMapID; }
+	unsigned int getBrdfLUTTextureID() { return brdfLUTTexture; }
 
 	Cube box;
 private:
@@ -34,9 +35,12 @@ private:
 
 	bool gammaCorrection;
 	unsigned int cubeMapID;
+
+	unsigned int hdrTexture;
 	unsigned int irradianceMapID;
 	unsigned int prefilterMapID; // used for specular IBL
-	unsigned int hdrTexture;
+	unsigned int brdfLUTTexture;
+
 	shared_ptr<Shader> skyboxShader;
 
 	glm::mat4 captureProjection;

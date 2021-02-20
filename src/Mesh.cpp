@@ -721,3 +721,58 @@ int Sphere::addMiddlePoint(int p1, int p2)
 
 	return i;
 }
+
+Rectangle::Rectangle(float width_, float height_, vec3 pos) :
+	width(width_), height(height_)
+{
+	position = pos;
+	scale = vec3(width, height, 1);
+	modelMatrix = glm::translate(modelMatrix, position);
+	modelMatrix = glm::scale(modelMatrix, scale);
+
+	create();
+}
+
+void Rectangle::create()
+{
+	// v0 ---- v3 
+	// |        |
+	// |		|
+	// |		|
+	// v1 ---- v2
+
+	vertices = vector<vec3>{
+		vec3(-1.0f, 1.0f, 0),
+		vec3(-1.0f, -1.0f, 0),
+		vec3(1.0f, -1.0f, 0),
+		vec3(1.0f, 1.0f, 0)
+		//vec3(-1.0f, 0.0f, 1.0f),
+		//vec3(1.0f, 0.0f, 1.0f),
+		//vec3(1.0f, 0.0f, -1.0f),
+		//vec3(-1.0f, 0.0f, -1.0f)
+	};
+	indices.push_back(vector<unsigned int>{
+		0, 1, 2,
+		0, 2, 3
+	});
+	normals = vector<vec3>{
+		vec3{0, 0, 1}, vec3{0, 0, 1}, vec3{0, 0, 1}, vec3{0, 0, 1},
+	};
+	texCoords = vector<vec2>{
+		vec2{1,1}, vec2{0,1}, vec2{0,0},vec2{1,0},
+	};
+
+	faceNum = indices[0].size() / 3;
+
+	// tangent bitangent
+	for (int i = 0; i < indices[0].size(); i += 3)
+	{
+		pair<vec3, vec3> tan = computeTB(vertices[indices[0][i]], vertices[indices[0][i + 1]], vertices[indices[0][i + 2]],
+			texCoords[indices[0][i]], texCoords[indices[0][i + 1]], texCoords[indices[0][i + 2]]);
+		for (int j = 0; j < 2; ++j)
+		{
+			tangents.push_back(tan.first);
+			bitangents.push_back(tan.second);
+		}
+	}
+}

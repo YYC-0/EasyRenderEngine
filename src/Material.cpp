@@ -48,25 +48,32 @@ Material::Material()
 	init();
 }
 
-void Material::loadTexture(std::string path, TextureType type)
+void Material::setTexture(Texture texture, TextureType type)
 {
 	switch (type)
 	{
 	case TextureType::Diffuse:
-		diffuseMap.load(path, TextureType::Diffuse);
+		diffuseMap = texture;
 		useDiffuseMap = true;
 		break;
 	case TextureType::Normal:
-		normalMap.load(path, TextureType::Normal);
+		normalMap = texture;
 		useNormalMap = true;
 		break;
 	case TextureType::Specular:
-		specularMap.load(path, TextureType::Specular);
+		specularMap = texture;
 		useSpecularMap = true;
 		break;
 	default:
 		break;
 	}
+}
+
+void Material::loadTexture(std::string path, TextureType type)
+{
+	Texture t;
+	t.load(path, type);
+	setTexture(t, type);
 }
 
 void Material::init()
@@ -123,7 +130,6 @@ void PBRMaterial::loadTextures(std::string fileFolderPath)
 
 void PBRMaterial::setIrradianceMap(Texture T)
 {
-	useIrradianceMap = true;
 	irradianceMap = T;
 }
 
@@ -140,5 +146,4 @@ void PBRMaterial::init()
 	useMetallicMap = false;
 	useRoughnessMap = false;
 	useAoMap = false;
-	useIrradianceMap = false;
 }

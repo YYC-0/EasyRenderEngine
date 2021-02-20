@@ -133,7 +133,7 @@ void CubeMap::drawAsSkybox(const glm::mat4 & view, const glm::mat4 & projection)
     skyboxShader->setAttrMat4("projection", projection);
     skyboxShader->setAttrB("gammaCorrection", gammaCorrection);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMapID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapID);
 
     box.draw(skyboxShader);
 
@@ -232,8 +232,8 @@ void CubeMap::generatePrefilterMap()
             box.draw(prefilterShader);
         }
     }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glEnable(GL_CULL_FACE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void CubeMap::generateBrdfLUTTexture()
@@ -253,6 +253,19 @@ void CubeMap::generateBrdfLUTTexture()
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
 
+    shared_ptr<Shader> brdfLUTShader = make_shared<Shader>("Shaders/brdfLUT.vert", "Shaders/brdfLUT.frag");
+    brdfLUTShader->use();
+    Rectangle rect;
+    rect.bind();
+
+    glDisable(GL_CULL_FACE);
+    glViewport(0, 0, 512, 512);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    rect.draw(brdfLUTShader);
+
+    glEnable(GL_CULL_FACE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void CubeMap::init()

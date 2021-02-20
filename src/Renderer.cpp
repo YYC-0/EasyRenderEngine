@@ -123,6 +123,7 @@ void Renderer::run()
         glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0);
         // draw objects
         // user render loop
+        //glDisable(GL_CULL_FACE);
         renderLoop();
 
         // draw skybox

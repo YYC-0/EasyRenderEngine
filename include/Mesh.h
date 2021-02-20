@@ -123,3 +123,16 @@ private:
 	int addVertex(vec3 p);
 	int addMiddlePoint(int p1, int p2);
 };
+
+class Rectangle : public Object
+{
+public:
+	Rectangle(float width_ = 1.0f, float height_ = 1.0f, vec3 pos = { 0,0,0 });
+	~Rectangle() {}
+
+private:
+	float width;
+	float height;
+
+	void create();
+};

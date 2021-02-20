@@ -17,7 +17,10 @@ struct Material {
     sampler2D metallicT;
     sampler2D roughnessT;
     sampler2D aoT;
+
     samplerCube irradianceMap;
+    samplerCube prefilterMap;
+    sampler2D brdfLUT;
 };
 
 struct Light {
@@ -85,6 +88,9 @@ void main()
     }
     // view direction
     V = normalize(viewPos - FragPos);
+    // reflection
+    vec3 R = reflect(-V, N);
+
     float NdotV = max(dot(N, V), 0.0); 
 
     vec3 albedo = mtl.albedo;
@@ -143,22 +149,27 @@ void main()
     }
 
     // ambient lighting
-    vec3 ambient;
-    if(useIrradianceMap)
-    {
-        vec3 kS = Fresnel_Schlick_Roughness(NdotV, F0, roughness);
-        vec3 kD = vec3(1.0) - kS;
-        kD *= 1.0 - metallic;
-        vec3 irradiance = texture(mtl.irradianceMap, N).rgb;
-        ambient = (kD * irradiance * albedo) * ao;
-    }
-    else
-    {
-        ambient = vec3(0.03) * mtl.albedo * mtl.ao;
-    }
+    // diffuse term
+    vec3 F = Fresnel_Schlick_Roughness(NdotV, F0, roughness);
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metallic;
+    vec3 irradiance = texture(mtl.irradianceMap, N).rgb;
+    vec3 diffuse = irradiance * albedo;
+
+    // specular term
+    const float MAX_REFLECTION_LOD = 4.0;
+    vec3 prefilteredColor = textureLod(mtl.prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 brdf = texture(mtl.brdfLUT, vec2(1.0 - NdotV, roughness)).rg;
+    vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
+    
+    vec3 ambient = (kD * diffuse + specular) * ao;
+    // ambient = vec3(0.03) * mtl.albedo * mtl.ao;
 
     vec3 color = ambient + Lo;
+    // HDR tonemapping
     color = color / (color + vec3(1.0));
+    // gamma correct
     color = pow(color, vec3(1.0/2.2));
     
     FragColor = vec4(color, 1.0);
