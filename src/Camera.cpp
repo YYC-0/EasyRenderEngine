@@ -1,5 +1,5 @@
 #include "../include/Camera.h"
-
+#include <iostream>
 // Perpective
 Camera::Camera(float aspect_, glm::vec3 position_, float fov_,
 	float yaw_, float pitch_,
@@ -66,6 +66,29 @@ Camera::Camera(glm::vec3 position_,
 //	projectionMatrix = glm::ortho(-orthoWidth / 2.0f, orthoWidth / 2.0f, -orthoHeight / 2.0f, orthoHeight / 2.0f, near, far);
 //}
 
+Camera::Camera(float aspect_, glm::vec3 position_, glm::vec3 viewDirection, float fov_, float speed, float sensitivity, float near_, float far_) :
+	aspect(aspect_),
+	position(position_),
+	fov(fov_),
+	movementSpeed(speed),
+	near(near_),
+	far(far_)
+{
+	projectionType = CameraType::Perpective;
+	worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	front = glm::normalize(viewDirection);
+
+	updateCameraVectors();
+
+	projectionMatrix = glm::perspective(glm::radians(fov), aspect, near, far);
+
+	if (sensitivity > 1.0)
+		sensitivity = 1.0;
+	if (sensitivity < 0)
+		sensitivity = 0.01;
+	mouseSensitivity = sensitivity * 0.002;
+}
+
 void Camera::processKeyboard(CameraMovement direction, float deltaTime)
 {
 	float velocity = movementSpeed * deltaTime;
@@ -78,8 +101,6 @@ void Camera::processKeyboard(CameraMovement direction, float deltaTime)
 	else if (direction == CameraMovement::RIGHT)
 		position += right * velocity;
 
-	// 使摄像机固定在xz平面上
-	// position.y = 0;
 }
 
 void Camera::processMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch)
@@ -87,16 +108,24 @@ void Camera::processMouseMovement(float xoffset, float yoffset, GLboolean constr
 	xoffset *= mouseSensitivity;
 	yoffset *= mouseSensitivity;
 
-	yaw += xoffset;
-	pitch += yoffset;
+	glm::mat4 trans = glm::mat4(1.0f);
+	if ((front.y < 0.99 && yoffset > 0) || (front.y > -0.99 && yoffset < 0))
+		trans = glm::rotate(trans, yoffset, right);
+	trans = glm::rotate(trans, -xoffset, glm::vec3(0.0, 1.0, 0.0));
+	glm::vec4 tempFront(front, 1.0);
+	tempFront = trans * tempFront;
+	front = tempFront;
 
-	if (constrainPitch)
-	{
-		if (pitch > 89.0f)
-			pitch = 89.0f;
-		if (pitch < -89.0f)
-			pitch = -89.0f;
-	}
+	//yaw += xoffset;
+	//pitch += yoffset;
+
+	//if (constrainPitch)
+	//{
+	//	if (pitch > 89.0f)
+	//		pitch = 89.0f;
+	//	if (pitch < -89.0f)
+	//		pitch = -89.0f;
+	//}
 
 	updateCameraVectors();
 }
@@ -110,11 +139,11 @@ void Camera::processMouseScroll(float yoffset)
 
 void Camera::updateCameraVectors()
 {
-	glm::vec3 tmpFront;
-	tmpFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	tmpFront.y = sin(glm::radians(pitch));
-	tmpFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	front = glm::normalize(tmpFront); // 单位化
+	//glm::vec3 tmpFront;
+	//tmpFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	//tmpFront.y = sin(glm::radians(pitch));
+	//tmpFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	//front = glm::normalize(tmpFront); // 单位化
 	right = glm::normalize(glm::cross(front, worldUp));
 	up = glm::normalize(glm::cross(right, front));
 

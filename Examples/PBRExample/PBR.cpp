@@ -5,7 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "include/Renderer.h"
+#include "Renderer.h"
 
 #include <iostream>
 #include <memory>
@@ -23,7 +23,7 @@ public:
 
         // create camera
         float aspect = (float)windowWidth / (float)windowHeight;
-        camera = make_shared<Camera>(aspect, glm::vec3(0.0f, 5.0f, 0.0f));
+        camera = make_shared<Camera>(aspect, glm::vec3(-3.0f, 6.0f, -3.0f), glm::vec3(1.0f, -1.0f, 1.0f));
 
         // create light
         pointLight1 = make_shared<PointLight>(vec3(0, 10, 0));
@@ -55,7 +55,7 @@ public:
                 shared_ptr<PBRMaterial> pbrMtl = make_shared<PBRMaterial>(
                         vec3(1.0, 0.0, 0.0), // albedo
                         i/7.0,              // mtallic
-                        max(0.05, j/7.0),  // roughness
+                        std::max(0.05, j/7.0),  // roughness
                         1.0);     // ao
                 pbrMtl->setIrradianceMap(irradianceMap);
                 pbrMtl->setPrefilterMap(prefilterMap);
@@ -66,7 +66,7 @@ public:
             }
         }
 
-        sphere0 = make_shared<Sphere>(1.0, 5, vec3(0.0, 3, 0.0));
+        sphere0 = make_shared<Sphere>(1.0, 5, vec3(0.0, 3.0, 0.0));
 
         shared_ptr<Material> mtl = make_shared<Material>(
                 vec3(1.0, 0.5, 0.31),  // ambient

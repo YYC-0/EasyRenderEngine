@@ -6,6 +6,4 @@ x64/
 *.user
 README.assets/
 main.cpp
-resources/pbr/
-resources/models/nanosuit/
-resources/models/suzanne/
+resources/

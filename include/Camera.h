@@ -22,13 +22,21 @@ class Camera
 public:
 	// Perpective
 	Camera(float aspect,
-		glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3 position,
 		float fov = 45.0f,
 		float yaw = -90.0f,
 		float pitch = 0.0f, 
 		float speed = 4.5f, 
-		float sensitivity = 0.1f,
+		float sensitivity = 0.5f,
 		float near = 0.1f,
+		float far = 100.0f); // ÆúÓÃ
+	Camera(float aspect,
+		glm::vec3 position,
+		glm::vec3 viewDirection,
+		float fov = 45.0f,
+		float speed = 4.5f,
+		float sensitivity = 0.5f, // (0, 1.0]
+		float near = 0.2f,
 		float far = 100.0f);
 	// Orthogonal 
 	Camera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), 
