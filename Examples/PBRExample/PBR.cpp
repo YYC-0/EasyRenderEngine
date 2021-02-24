@@ -84,15 +84,15 @@ public:
         sphere0->setMaterial(pbrMtl);
 
         // test------
-        testLUTShader = make_shared<Shader>("Shaders/brdfLUT.vert", "Shaders/brdfLUT.frag");
-        testRect = make_shared<Rectangle>(1, 1, vec3(2, 2, 2));
-        //testCube = make_shared<Cube>(2,2,2);
+        testRect = make_shared<Rectangle>(1, 1, vec3(0, 5, 0));
+        //testCube = make_shared<Cube>(2,2,2, vec3(0,3,0));
         Texture LUT(cubeMap->getBrdfLUTTextureID(), TextureType::Diffuse);
         shared_ptr<Material> rectMtl = make_shared<Material>();
+        //rectMtl->loadTexture("./resources/uv-test.jpeg", TextureType::Diffuse);
         rectMtl->setTexture(LUT, TextureType::Diffuse);
         //testCube->setMaterial(rectMtl);
         testRect->setMaterial(rectMtl);
-        // ------
+        // ------------------------------
 
         // Gui
         gui = make_shared<Gui>();
@@ -120,7 +120,6 @@ public:
 
         addShader("phong", phong);
         addShader("pbr shader", pbrShader);
-        addShader("LUT", testLUTShader);
 
         addSkybox(cubeMap);
 
@@ -155,9 +154,8 @@ private:
 
     shared_ptr<Gui> gui;
 
-    shared_ptr<Shader> testLUTShader;
     shared_ptr<Rectangle> testRect;
-    //shared_ptr<Cube> testCube;
+    shared_ptr<Cube> testCube;
 };
 
 int main()

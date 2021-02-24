@@ -105,22 +105,22 @@ void Shader::setMeterial(shared_ptr<Material> mtl)
 	setAttrB("useNormalMap", mtl->useNormalMap);
 
 
+	setAttrI("mtl.diffuseT", 2);
+	setAttrI("mtl.normalT", 3);
+	setAttrI("mtl.specularT", 4);
 	// textures
 	if (mtl->useDiffuseMap)
 	{
-		setAttrI("mtl.diffuseT", 2);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, mtl->diffuseMap.getID());
 	}
 	if (mtl->useNormalMap)
 	{
-		setAttrI("mtl.normalT", 3);
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, mtl->normalMap.getID());
 	}
 	if (mtl->useSpecularMap)
 	{
-		setAttrI("mtl.specularT", 4);
 		glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, mtl->specularMap.getID());
 	}
@@ -141,9 +141,16 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 	//setAttrB("useIrradianceMap", mtl->useIrradianceMap);
 
 	// textures
+	setAttrI("mtl.albedoT", 2);
+	setAttrI("mtl.normalT", 3);
+	setAttrI("mtl.metallicT", 4);
+	setAttrI("mtl.roughnessT", 5);
+	setAttrI("mtl.aoT", 6);
+	setAttrI("mtl.irradianceMap", 7);
+	setAttrI("mtl.prefilterMap", 8);
+	setAttrI("mtl.brdfLUT", 9);
 	if (mtl->useAlbedoMap)
 	{
-		setAttrI("mtl.albedoT", 2);
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, mtl->albedoMap.getID());
 	}
@@ -151,13 +158,11 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 		setAttrVec3("mtl.albedo", mtl->albedo);
 	if (mtl->useNormalMap)
 	{
-		setAttrI("mtl.normalT", 3);
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, mtl->normalMap.getID());
 	}
 	if (mtl->useMetallicMap)
 	{
-		setAttrI("mtl.metallicT", 4);
 		glActiveTexture(GL_TEXTURE4);
 		glBindTexture(GL_TEXTURE_2D, mtl->metallicMap.getID());
 	}
@@ -165,7 +170,6 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 		setAttrF("mtl.metallic", mtl->metallic);
 	if (mtl->useRoughnessMap)
 	{
-		setAttrI("mtl.roughnessT", 5);
 		glActiveTexture(GL_TEXTURE5);
 		glBindTexture(GL_TEXTURE_2D, mtl->roughnessMap.getID());
 	}
@@ -173,22 +177,18 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 		setAttrF("mtl.roughness", mtl->roughness);
 	if (mtl->useAoMap)
 	{
-		setAttrI("mtl.aoT", 6);
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, mtl->aoMap.getID());
 	}
 	else
 		setAttrF("mtl.ao", mtl->ao);
 
-	setAttrI("mtl.irradianceMap", 7);
 	glActiveTexture(GL_TEXTURE7);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, mtl->irradianceMap.getID());
 
-	setAttrI("mtl.prefilterMap", 8);
 	glActiveTexture(GL_TEXTURE8);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, mtl->prefilterMap.getID());
 
-	setAttrI("mtl.brdfLUT", 9);
 	glActiveTexture(GL_TEXTURE9);
 	glBindTexture(GL_TEXTURE_2D, mtl->brdfLUT.getID());
 

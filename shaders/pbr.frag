@@ -160,7 +160,7 @@ void main()
     // specular term
     const float MAX_REFLECTION_LOD = 4.0;
     vec3 prefilteredColor = textureLod(mtl.prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
-    vec2 brdf = texture(mtl.brdfLUT, vec2(1.0 - NdotV, roughness)).rg;
+    vec2 brdf = texture(mtl.brdfLUT, vec2(NdotV, roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
     
     vec3 ambient = (kD * diffuse + specular) * ao;

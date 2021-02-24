@@ -1,11 +1,11 @@
-/*#include <glad/glad.h>
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "include/Renderer.h"
+#include "Renderer.h"
 
 #include <iostream>
 #include <memory>
@@ -23,7 +23,7 @@ public:
 
         // create camera
         float aspect = (float)windowWidth / (float)windowHeight;
-        camera = make_shared<Camera>(aspect, glm::vec3(0.0f, 1.0f, 3.0f));
+        camera = make_shared<Camera>(aspect, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1,0,0));
         // create light
         lightDir = vec3(0.2f, -1.0f, 0.2f);
         directionalLight = make_shared<DirectionalLight>(lightDir);
@@ -40,9 +40,10 @@ public:
         // create meshes
         cube = make_shared<Cube>(1.0, 1.0, 1.0); // size
         // ---cube material
-        Material cubeMaterial, planeMaterial;
-        cubeMaterial.loadTexture("./resources/brickwall.jpg", TextureType::Diffuse);
-        cubeMaterial.loadTexture("./resources/brickwall_normal.jpg", TextureType::Normal);
+        shared_ptr<Material> cubeMaterial = make_shared<Material>();
+        shared_ptr<Material> planeMaterial = make_shared<Material>();
+        cubeMaterial->loadTexture("./resources/brickwall.jpg", TextureType::Diffuse);
+        cubeMaterial->loadTexture("./resources/brickwall_normal.jpg", TextureType::Normal);
         cube->setMaterial(cubeMaterial);
 
         // sponza
@@ -53,7 +54,7 @@ public:
         vector<string> skyboxPath{ "resources/skybox/right.jpg", "resources/skybox/left.jpg",
             "resources/skybox/top.jpg", "resources/skybox/bottom.jpg",
             "resources/skybox/front.jpg", "resources/skybox/back.jpg" };
-        skybox = make_shared<Skybox>(skyboxPath);
+        skybox = make_shared<CubeMap>(skyboxPath);
 
         // Gui
         gui = make_shared<Gui>();
@@ -109,7 +110,7 @@ private:
 
     shared_ptr<Shader> shader;
 
-    shared_ptr<Skybox> skybox;
+    shared_ptr<CubeMap> skybox;
 
     shared_ptr<Gui> gui;
 };
@@ -121,4 +122,3 @@ int main()
 
     return 0;
 }
-*/

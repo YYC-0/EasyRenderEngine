@@ -735,11 +735,14 @@ Rectangle::Rectangle(float width_, float height_, vec3 pos) :
 
 void Rectangle::create()
 {
-	// v0 ---- v3 
-	// |        |
-	// |		|
-	// |		|
-	// v1 ---- v2
+	//	        y
+	//	        |
+	//	        |
+	//		v3 ---- v0 
+	//	    |   |    |
+	//x <---|---	 |
+	//		|	     |
+	//      v2 ---- v1 
 
 	vertices = vector<vec3>{
 		vec3(-1.0f, 1.0f, 0),
@@ -752,14 +755,14 @@ void Rectangle::create()
 		//vec3(-1.0f, 0.0f, -1.0f)
 	};
 	indices.push_back(vector<unsigned int>{
-		0, 1, 2,
-		0, 2, 3
+		0, 3, 2,
+		0, 2, 1
 	});
 	normals = vector<vec3>{
-		vec3{0, 0, 1}, vec3{0, 0, 1}, vec3{0, 0, 1}, vec3{0, 0, 1},
+		vec3{0, 0, -1}, vec3{0, 0, -1}, vec3{0, 0, -1}, vec3{0, 0, -1},
 	};
 	texCoords = vector<vec2>{
-		vec2{1,1}, vec2{0,1}, vec2{0,0},vec2{1,0},
+		vec2{1,1}, vec2{1,0}, vec2{0,0},vec2{0,1},
 	};
 
 	faceNum = indices[0].size() / 3;
