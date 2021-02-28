@@ -17,11 +17,10 @@ struct Material {
     sampler2D metallicT;
     sampler2D roughnessT;
     sampler2D aoT;
-
-    samplerCube irradianceMap;
-    samplerCube prefilterMap;
-    sampler2D brdfLUT;
 };
+uniform samplerCube irradianceMap;
+uniform samplerCube prefilterMap;
+uniform sampler2D brdfLUT;
 
 struct Light {
     int type;
@@ -154,13 +153,13 @@ void main()
     vec3 kS = F;
     vec3 kD = vec3(1.0) - kS;
     kD *= 1.0 - metallic;
-    vec3 irradiance = texture(mtl.irradianceMap, N).rgb;
+    vec3 irradiance = texture(irradianceMap, N).rgb;
     vec3 diffuse = irradiance * albedo;
 
     // specular term
     const float MAX_REFLECTION_LOD = 4.0;
-    vec3 prefilteredColor = textureLod(mtl.prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
-    vec2 brdf = texture(mtl.brdfLUT, vec2(NdotV, roughness)).rg;
+    vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
+    vec2 brdf = texture(brdfLUT, vec2(NdotV, roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y);
     
     vec3 ambient = (kD * diffuse + specular) * ao;

@@ -24,15 +24,13 @@ class Texture
 {
 public:
 	Texture() = default;
-	Texture(unsigned int id_, TextureType type_) :
-		id(id_), type(type_) {}
+	Texture(unsigned int id_) :
+		id(id_) {}
 	bool load(string imgPath, TextureType type_);
 	unsigned int getID() const { return id; }
 
 private:
 	unsigned int id;
-	TextureType type;
-	string path;
 };
 
 class Material

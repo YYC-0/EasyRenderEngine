@@ -7,9 +7,6 @@
 
 bool Texture::load(string imgPath, TextureType type_)
 {
-	type = type_;
-	path = imgPath;
-
 	glGenTextures(1, &id);
 	int width, height, nrComponents;
 	stbi_set_flip_vertically_on_load(true);

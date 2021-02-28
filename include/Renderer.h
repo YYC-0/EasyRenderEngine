@@ -28,18 +28,19 @@ public:
 	virtual void renderLoop();
 	virtual void processInput();
 
-	void draw(shared_ptr<Object> object, shared_ptr<Shader> shader);
+	void draw(shared_ptr<Object> object, shared_ptr<Shader> shader = nullptr);
 
 	void addObject(string meshName, shared_ptr<Object> mesh);
 	void addLight(string lightName, shared_ptr<Light> light);
 	void addShader(string shaderName, shared_ptr<Shader> shader_);
 	void addSkybox(shared_ptr<CubeMap> skybox_);
 	void addGui(shared_ptr<Gui> gui_);
+	void addEnvironmentMap(shared_ptr<CubeMap> envMap_);
 
 	void setClearColor(vec3 color);
 	void setCamera(shared_ptr<Camera> camera_);
 	void setMSAA(bool b);
-
+	void setPBRMode(bool b);
 
 private:
 	shared_ptr<Window> window;
@@ -56,6 +57,10 @@ private:
 	map<string, shared_ptr<DirectionalLight>> dirLights;
 	map<string, shared_ptr<PointLight>> pointLights;
 	map<string, shared_ptr<Shader>> shaders;
+
+	// shaders
+	shared_ptr<Shader> pbrShader;
+	shared_ptr<Shader> phongShader;
 
 	vec3 clearColor;
 
@@ -80,8 +85,15 @@ private:
 
 	// Skybox
 	shared_ptr<CubeMap> skybox;
+	void drawSkybox();
+
+	// Environment map
+	shared_ptr<CubeMap> envMap;
 
 	// GUI
 	shared_ptr<Gui> gui;
+
+	// Mode
+	bool pbrMode;
 
 };

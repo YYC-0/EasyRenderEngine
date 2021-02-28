@@ -18,7 +18,10 @@ Renderer::Renderer() :
     dirLightNumMax(5),
     pointLightNumMax(10),
     gui(nullptr),
-    skybox(nullptr)
+    skybox(nullptr),
+    pbrShader(nullptr),
+    phongShader(nullptr),
+    pbrMode(false)
 {
     depthMapFBOs.resize(dirLightNumMax, 0);
 }
@@ -48,9 +51,9 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
 
     // loading shader
     depthMapShader = make_shared<Shader>("./shaders/shadow_mapping.vert", "./shaders/shadow_mapping.frag");
-    //depthMapShader->compile();
     cubeDepthMapShader = make_shared<Shader>("./shaders/point_shadows_depth.vert", "./shaders/point_shadows_depth.frag", "./shaders/point_shadows_depth.geom");
-    //cubeDepthMapShader->compile();
+    phongShader = Shader::phong();
+    addShader("phong", phongShader);
 
     initShadowMap();
     initCubeShadowMap();
@@ -116,6 +119,22 @@ void Renderer::run()
                 light.second->setShaderAttr(shader, n++);
             }
         }
+        if (pbrMode)
+        {
+            // ´ýÐÞ¸Ä------------------------------------------------------------------------------
+            pbrShader->setAttrI("irradianceMap", 7);
+            pbrShader->setAttrI("prefilterMap", 8);
+            pbrShader->setAttrI("brdfLUT", 9);
+
+            glActiveTexture(GL_TEXTURE7);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, envMap->getIrradianceMapID());
+
+            glActiveTexture(GL_TEXTURE8);
+            glBindTexture(GL_TEXTURE_CUBE_MAP, envMap->getPrefilterMapID());
+
+            glActiveTexture(GL_TEXTURE9);
+            glBindTexture(GL_TEXTURE_2D, envMap->getBrdfLUTTextureID());
+        }
         
         // render scene
         glViewport(0, 0, window->getWidth(), window->getHeight());
@@ -139,14 +158,22 @@ void Renderer::run()
         glfwSwapBuffers(glfwWindow);
         glfwPollEvents();
 
-        cout << "FPS: " << 1.0 / deltaTime << '\r';
+        //cout << "FPS: " << 1.0 / deltaTime << '\r';
     }
 
 }
 
 void Renderer::draw(shared_ptr<Object> object, shared_ptr<Shader> shader)
 {
-    object->draw(shader);
+    if(shader)
+        object->draw(shader);
+    else
+    {
+        if (pbrMode)
+            object->draw(pbrShader);
+        else
+            object->draw(phongShader);
+    }
 }
 
 void Renderer::addResources()
@@ -206,6 +233,12 @@ void Renderer::addGui(shared_ptr<Gui> gui_)
     gui = gui_;
 }
 
+void Renderer::addEnvironmentMap(shared_ptr<CubeMap> envMap_)
+{
+    envMap_->preComputeMaps();
+    envMap = envMap_;
+}
+
 void Renderer::setClearColor(vec3 color)
 {
     clearColor = color;
@@ -223,6 +256,16 @@ void Renderer::setMSAA(bool b)
         glEnable(GL_MULTISAMPLE);
     else
         glDisable(GL_MULTISAMPLE);
+}
+
+void Renderer::setPBRMode(bool b)
+{
+    pbrMode = b;
+    if (pbrMode && !pbrShader)
+    {
+        pbrShader = Shader::pbr();
+        addShader("pbrShader", pbrShader);
+    }
 }
 
 void Renderer::renderShadowMap()
@@ -368,6 +411,11 @@ void Renderer::initCubeShadowMap()
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "Point light shadow framebuffer not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Renderer::drawSkybox()
+{
+
 }
 
 void Renderer::renderLoop()

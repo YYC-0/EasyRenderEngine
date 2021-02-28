@@ -34,22 +34,15 @@ public:
         // load cube map
         cubeMap = make_shared<CubeMap>();
         cubeMap->loadHdr("./resources/pbr/textures/hdr/Brooklyn_Bridge_Planks_2k.hdr", 1024);
-        cubeMap->generateIrradianceMap();
-        cubeMap->generatePrefilterMap();
-        cubeMap->generateBrdfLUTTexture();
-        Texture irradianceMap(cubeMap->getIrradianceMapID(), TextureType::Irradiance);
-        Texture prefilterMap(cubeMap->getPrefilterMapID(), TextureType::Irradiance);
-        Texture brdfLUT(cubeMap->getBrdfLUTTextureID(), TextureType::Irradiance);
 
         // create shader    
-        phong = Shader::phong();
-        pbrShader = Shader::pbr();
+        //phong = Shader::phong();
 
         // create meshes
         float interval = 2.5;
         for (int i = 0; i <= 7; ++i)
         {
-            for (int j = 0; j <= 7; ++j)
+            for (int j = 0; j <= 7; ++j) 
             {
                 shared_ptr<Sphere> sphere = make_shared<Sphere>(1.0, 4, vec3(i * interval, 0.0, j * interval));
                 shared_ptr<PBRMaterial> pbrMtl = make_shared<PBRMaterial>(
@@ -57,9 +50,6 @@ public:
                         i/7.0,              // mtallic
                         std::max(0.05, j/7.0),  // roughness
                         1.0);     // ao
-                pbrMtl->setIrradianceMap(irradianceMap);
-                pbrMtl->setPrefilterMap(prefilterMap);
-                pbrMtl->setBrdfLUT(brdfLUT);
 
                 sphere->setMaterial(pbrMtl);
                 spheres.push_back(sphere);
@@ -77,22 +67,8 @@ public:
         shared_ptr<PBRMaterial> pbrMtl = make_shared<PBRMaterial>();
         //pbrMtl->loadTextures("./resources/pbr/textures/pbr/ornate-celtic-gold/");
         pbrMtl->loadTextures("./resources/pbr/textures/pbr/gold/");
-        pbrMtl->setIrradianceMap(irradianceMap);
-        pbrMtl->setPrefilterMap(prefilterMap);
-        pbrMtl->setBrdfLUT(brdfLUT);
 
         sphere0->setMaterial(pbrMtl);
-
-        // test------
-        testRect = make_shared<Rectangle>(1, 1, vec3(0, 5, 0));
-        //testCube = make_shared<Cube>(2,2,2, vec3(0,3,0));
-        Texture LUT(cubeMap->getBrdfLUTTextureID(), TextureType::Diffuse);
-        shared_ptr<Material> rectMtl = make_shared<Material>();
-        //rectMtl->loadTexture("./resources/uv-test.jpeg", TextureType::Diffuse);
-        rectMtl->setTexture(LUT, TextureType::Diffuse);
-        //testCube->setMaterial(rectMtl);
-        testRect->setMaterial(rectMtl);
-        // ------------------------------
 
         // Gui
         gui = make_shared<Gui>();
@@ -103,6 +79,8 @@ public:
         setClearColor(vec3(1.0, 1.0, 1.0));
         setCamera(camera);
         setMSAA(true);
+
+        setPBRMode(true); // !!!!
     }
 
     virtual void addResources() override
@@ -111,15 +89,16 @@ public:
             addObject("sphere" + to_string(i+1), spheres[i]);
         addObject("sphere0", sphere0);
 
-        addObject("Rect", testRect);
+        //addObject("Rect", testRect);
         //addObject("testCube", testCube);
 
         //addLight("pointLight", pointLight1);
         addLight("direction light", dirLight);
         addLight("direction light2", dirLight2);
 
-        addShader("phong", phong);
-        addShader("pbr shader", pbrShader);
+        //addShader("myPhong", phong);
+        
+        addEnvironmentMap(cubeMap);
 
         addSkybox(cubeMap);
 
@@ -129,11 +108,11 @@ public:
     virtual void renderLoop()
     {
         for (auto sphere : spheres)
-            draw(sphere, pbrShader);
-        draw(sphere0, pbrShader);
+            draw(sphere);
+        draw(sphere0);
 
         //draw(testCube, phong);
-        draw(testRect, phong);
+        //draw(testRect, phong);
     }
 
 private:
@@ -147,15 +126,14 @@ private:
     shared_ptr<DirectionalLight> dirLight;
     shared_ptr<DirectionalLight> dirLight2;
 
-    shared_ptr<Shader> phong;
-    shared_ptr<Shader> pbrShader;
+    //shared_ptr<Shader> phong;
 
     shared_ptr<CubeMap> cubeMap;
 
     shared_ptr<Gui> gui;
 
-    shared_ptr<Rectangle> testRect;
-    shared_ptr<Cube> testCube;
+    //shared_ptr<Rectangle> testRect;
+    //shared_ptr<Cube> testCube;
 };
 
 int main()

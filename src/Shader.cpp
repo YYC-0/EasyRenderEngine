@@ -146,9 +146,6 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 	setAttrI("mtl.metallicT", 4);
 	setAttrI("mtl.roughnessT", 5);
 	setAttrI("mtl.aoT", 6);
-	setAttrI("mtl.irradianceMap", 7);
-	setAttrI("mtl.prefilterMap", 8);
-	setAttrI("mtl.brdfLUT", 9);
 	if (mtl->useAlbedoMap)
 	{
 		glActiveTexture(GL_TEXTURE2);
@@ -182,15 +179,6 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 	}
 	else
 		setAttrF("mtl.ao", mtl->ao);
-
-	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, mtl->irradianceMap.getID());
-
-	glActiveTexture(GL_TEXTURE8);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, mtl->prefilterMap.getID());
-
-	glActiveTexture(GL_TEXTURE9);
-	glBindTexture(GL_TEXTURE_2D, mtl->brdfLUT.getID());
 
 }
 

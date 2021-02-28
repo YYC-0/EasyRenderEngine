@@ -141,6 +141,14 @@ void CubeMap::drawAsSkybox(const glm::mat4 & view, const glm::mat4 & projection)
     glEnable(GL_CULL_FACE);
 }
 
+// generate irradianceMap, prefilterMap, brdfLUTTexture for IBL
+void CubeMap::preComputeMaps()
+{
+    generateIrradianceMap();
+    generatePrefilterMap();
+    generateBrdfLUTTexture();
+}
+
 // generate irradiance map from the environment map
 void CubeMap::generateIrradianceMap()
 {
@@ -238,9 +246,9 @@ void CubeMap::generatePrefilterMap()
 
 void CubeMap::generateBrdfLUTTexture()
 {
-    glGenTextures(1, &brdfLUTTexture);
+    glGenTextures(1, &brdfLUTTextureID);
 
-    glBindTexture(GL_TEXTURE_2D, brdfLUTTexture);
+    glBindTexture(GL_TEXTURE_2D, brdfLUTTextureID);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_FLOAT, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -251,7 +259,7 @@ void CubeMap::generateBrdfLUTTexture()
     glGenFramebuffers(1, &captureFBO);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 512, 512);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brdfLUTTextureID, 0);
 
     shared_ptr<Shader> brdfLUTShader = make_shared<Shader>("Shaders/brdfLUT.vert", "Shaders/brdfLUT.frag");
     brdfLUTShader->use();

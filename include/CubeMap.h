@@ -20,18 +20,20 @@ public:
 	void loadHdr(const string &path, int resolution = 512);
 	void drawAsSkybox(const glm::mat4& view, const glm::mat4& projection);
 	void setGammaCorrection(bool b) { gammaCorrection = b; }
-	void generateIrradianceMap();
-	void generatePrefilterMap();
-	void generateBrdfLUTTexture();
+	void preComputeMaps(); // generate irradianceMap, prefilterMap, brdfLUTTexture for IBL
 
 	unsigned int getCubeMapID() { return cubeMapID; }
 	unsigned int getIrradianceMapID() { return irradianceMapID; }
 	unsigned int getPrefilterMapID() { return prefilterMapID; }
-	unsigned int getBrdfLUTTextureID() { return brdfLUTTexture; }
+	unsigned int getBrdfLUTTextureID() { return brdfLUTTextureID; }
 
-	Cube box;
 private:
 	void init();
+	void generateIrradianceMap();
+	void generatePrefilterMap();
+	void generateBrdfLUTTexture();
+
+	Cube box;
 
 	bool gammaCorrection;
 	unsigned int cubeMapID;
@@ -39,7 +41,7 @@ private:
 	unsigned int hdrTexture;
 	unsigned int irradianceMapID;
 	unsigned int prefilterMapID; // used for specular IBL
-	unsigned int brdfLUTTexture;
+	unsigned int brdfLUTTextureID;
 
 	shared_ptr<Shader> skyboxShader;
 
