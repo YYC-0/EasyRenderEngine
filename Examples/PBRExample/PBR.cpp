@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -9,6 +10,7 @@
 
 #include <iostream>
 #include <memory>
+#include <cmath>
 using namespace std;
 
 class myRenderer : public Renderer
@@ -39,36 +41,54 @@ public:
         //phong = Shader::phong();
 
         // create meshes
-        float interval = 2.5;
-        for (int i = 0; i <= 7; ++i)
-        {
-            for (int j = 0; j <= 7; ++j) 
-            {
-                shared_ptr<Sphere> sphere = make_shared<Sphere>(1.0, 4, vec3(i * interval, 0.0, j * interval));
-                shared_ptr<PBRMaterial> pbrMtl = make_shared<PBRMaterial>(
-                        vec3(1.0, 0.0, 0.0), // albedo
-                        i/7.0,              // mtallic
-                        std::max(0.05, j/7.0),  // roughness
-                        1.0);     // ao
+        //float interval = 2.5;
+        //for (int i = 0; i <= 7; ++i)
+        //{
+        //    for (int j = 0; j <= 7; ++j) 
+        //    {
+        //        shared_ptr<Sphere> sphere = make_shared<Sphere>(1.0, 4, vec3(i * interval, 0.0, j * interval));
+        //        shared_ptr<PBRMaterial> pbrMtl = make_shared<PBRMaterial>(
+        //                vec3(1.0, 0.0, 0.0), // albedo
+        //                i/7.0,              // mtallic
+        //                std::max(0.05, j/7.0),  // roughness
+        //                1.0);     // ao
 
-                sphere->setMaterial(pbrMtl);
-                spheres.push_back(sphere);
-            }
-        }
+        //        sphere->setMaterial(pbrMtl);
+        //        spheres.push_back(sphere);
+        //    }
+        //}
 
-        sphere0 = make_shared<Sphere>(1.0, 5, vec3(0.0, 3.0, 0.0));
+        spheres.resize(8);
+        for(int i=0; i<spheres.size(); ++i)
+            spheres[i] = make_shared<Sphere>(1.0, 5, vec3(cos(i* M_PI/4.0) * 4, 0.0, sin(i*M_PI/4.0) * 4));
+        //sphere0 = make_shared<Sphere>(1.0, 5, vec3(0.0, 3.0, 0.0));
 
-        shared_ptr<Material> mtl = make_shared<Material>(
-                vec3(1.0, 0.5, 0.31),  // ambient
-                vec3(1.0, 0.5, 0.31),       // diffuse
-                vec3(0.5, 0.5, 0.5),        // specular
-                32.0);                       // shininess);
+        // create material
+        shared_ptr<PBRMaterial> wood = make_shared<PBRMaterial>();
+        wood->loadTextures("./resources/pbr/textures/pbr/bamboo-wood-semigloss/");
+        shared_ptr<PBRMaterial> gold = make_shared<PBRMaterial>();
+        gold->loadTextures("./resources/pbr/textures/pbr/gold/");
+        shared_ptr<PBRMaterial> ornateCelticGold = make_shared<PBRMaterial>();
+        ornateCelticGold->loadTextures("./resources/pbr/textures/pbr/ornate-celtic-gold/");
+        shared_ptr<PBRMaterial> paintPeeling = make_shared<PBRMaterial>();
+        paintPeeling->loadTextures("./resources/pbr/textures/pbr/paint-peeling/");
+        shared_ptr<PBRMaterial> slipperystonework = make_shared<PBRMaterial>();
+        slipperystonework->loadTextures("./resources/pbr/textures/pbr/slipperystonework/");
+        shared_ptr<PBRMaterial> titaniumScuffed = make_shared<PBRMaterial>();
+        titaniumScuffed->loadTextures("./resources/pbr/textures/pbr/Titanium-Scuffed/");
+        shared_ptr<PBRMaterial> wornpaintedcement = make_shared<PBRMaterial>();
+        wornpaintedcement->loadTextures("./resources/pbr/textures/pbr/wornpaintedcement/");
+        shared_ptr<PBRMaterial> wrinkledPaper = make_shared<PBRMaterial>();
+        wrinkledPaper->loadTextures("./resources/pbr/textures/pbr/wrinkled-paper/");
 
-        shared_ptr<PBRMaterial> pbrMtl = make_shared<PBRMaterial>();
-        //pbrMtl->loadTextures("./resources/pbr/textures/pbr/ornate-celtic-gold/");
-        pbrMtl->loadTextures("./resources/pbr/textures/pbr/gold/");
-
-        sphere0->setMaterial(pbrMtl);
+        spheres[0]->setMaterial(wood);
+        spheres[1]->setMaterial(gold);
+        spheres[2]->setMaterial(ornateCelticGold);
+        spheres[3]->setMaterial(paintPeeling);
+        spheres[4]->setMaterial(slipperystonework);
+        spheres[5]->setMaterial(titaniumScuffed);
+        spheres[6]->setMaterial(wornpaintedcement);
+        spheres[7]->setMaterial(wrinkledPaper);
 
         // Gui
         gui = make_shared<Gui>();
@@ -87,7 +107,7 @@ public:
     {
         for (int i = 0; i < spheres.size(); ++i)
             addObject("sphere" + to_string(i+1), spheres[i]);
-        addObject("sphere0", sphere0);
+        //addObject("sphere0", sphere0);
 
         //addObject("Rect", testRect);
         //addObject("testCube", testCube);
@@ -109,7 +129,7 @@ public:
     {
         for (auto sphere : spheres)
             draw(sphere);
-        draw(sphere0);
+        //draw(sphere0);
 
         //draw(testCube, phong);
         //draw(testRect, phong);
@@ -120,7 +140,7 @@ private:
     int windowHeight;
     shared_ptr<Camera> camera;
     vector<shared_ptr<Sphere>> spheres;
-    shared_ptr<Sphere> sphere0;
+    //shared_ptr<Sphere> sphere0;
 
     shared_ptr<PointLight> pointLight1;
     shared_ptr<DirectionalLight> dirLight;

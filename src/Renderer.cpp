@@ -237,6 +237,22 @@ void Renderer::addEnvironmentMap(shared_ptr<CubeMap> envMap_)
 {
     envMap_->preComputeMaps();
     envMap = envMap_;
+
+    if (!pbrShader)
+        pbrShader = Shader::pbr();
+
+    pbrShader->setAttrI("irradianceMap", 7);
+    pbrShader->setAttrI("prefilterMap", 8);
+    pbrShader->setAttrI("brdfLUT", 9);
+
+    glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, envMap->getIrradianceMapID());
+
+    glActiveTexture(GL_TEXTURE8);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, envMap->getPrefilterMapID());
+
+    glActiveTexture(GL_TEXTURE9);
+    glBindTexture(GL_TEXTURE_2D, envMap->getBrdfLUTTextureID());
 }
 
 void Renderer::setClearColor(vec3 color)
@@ -261,10 +277,20 @@ void Renderer::setMSAA(bool b)
 void Renderer::setPBRMode(bool b)
 {
     pbrMode = b;
-    if (pbrMode && !pbrShader)
+    if (pbrMode)
     {
-        pbrShader = Shader::pbr();
-        addShader("pbrShader", pbrShader);
+        auto iter = shaders.find("pbrShader");
+        if (iter == shaders.end())
+        {
+            pbrShader = Shader::pbr();
+            addShader("pbrShader", pbrShader);
+        }
+    }
+    else
+    {
+        auto iter = shaders.find("pbrShader");
+        if (iter != shaders.end())
+            shaders.erase(iter);
     }
 }
 
