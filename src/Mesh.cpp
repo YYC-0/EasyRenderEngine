@@ -408,6 +408,8 @@ void Model::loadObj(const string &path)
 		else if (tokens[0] == "mtllib")
 		{
 			size_t pos = path.find_last_of("/");
+			if(pos == string::npos)
+				pos = path.find_last_of("\\");
 			if (pos != string::npos)
 			{
 				string mtllibPath = path.substr(0, pos + 1) + tokens[1];
@@ -489,6 +491,8 @@ void Model::loadMaterialLib(string path)
 
 	string dir; // µ±Ç°Ä¿Â¼
 	size_t pos = path.find_last_of("/");
+	if(pos == string::npos)
+		pos = path.find_last_of("\\");
 	if (pos != string::npos)
 		dir = path.substr(0, pos+1);
 
