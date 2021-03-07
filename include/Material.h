@@ -66,7 +66,7 @@ class PBRMaterial : public Material
 {
 public:
 	PBRMaterial() { init(); };
-	PBRMaterial(vec3 albedo_, float metallic_, float roughness_, float ao_) :
+	PBRMaterial(vec3 albedo_, float metallic_, float roughness_, float ao_ = 1.0f) :
 		albedo(albedo_), metallic(metallic_), roughness(roughness_), ao(ao_),
 		useAlbedoMap(false), useNormalMap(false), useMetallicMap(false), 
 		useRoughnessMap(false), useAoMap(false)

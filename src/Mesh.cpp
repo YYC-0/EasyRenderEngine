@@ -420,6 +420,13 @@ void Model::loadObj(const string &path)
 	if (!faces.empty())
 		facesGroupsIdx_.push_back(faces);
 
+	// 无纹理
+	if (modelMaterials.empty())
+	{
+		shared_ptr<Material> mtl = make_shared<Material>();
+		materials.push_back(mtl);
+	}
+
 	// 转换格式
 	vertices.push_back(vec3(0));
 	normals.push_back(vec3(0));
@@ -463,9 +470,11 @@ void Model::draw(shared_ptr<Shader> shader)
 
 	for (int i = 0; i < indices.size(); ++i)
 	{
-		shared_ptr<Material> mtl = modelMaterials[materialName[i]];
-		//if(!modelMaterials.empty())
-		//	mtl = modelMaterials[materialName[i]];
+		shared_ptr<Material> mtl;
+		if (modelMaterials.empty())
+			mtl = materials[0];
+		else
+			mtl = modelMaterials[materialName[i]];
 
 		shader->setMeterial(mtl);
 

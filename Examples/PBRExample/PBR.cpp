@@ -37,9 +37,6 @@ public:
         cubeMap = make_shared<CubeMap>();
         cubeMap->loadHdr("./resources/pbr/textures/hdr/Brooklyn_Bridge_Planks_2k.hdr", 1024);
 
-        // create shader    
-        //phong = Shader::phong();
-
         // create meshes
         //float interval = 2.5;
         //for (int i = 0; i <= 7; ++i)
@@ -63,6 +60,10 @@ public:
             spheres[i] = make_shared<Sphere>(1.0, 5, vec3(cos(i* M_PI/4.0) * 4, 0.0, sin(i*M_PI/4.0) * 4));
         //sphere0 = make_shared<Sphere>(1.0, 5, vec3(0.0, 3.0, 0.0));
 
+        suzanne = make_shared<Model>("./resources/suzanne.obj");
+        suzanne->setScale(vec3(1.5));
+        suzanne->setRotateY(180);
+
         // create material
         shared_ptr<PBRMaterial> wood = make_shared<PBRMaterial>();
         wood->loadTextures("./resources/pbr/textures/pbr/bamboo-wood-semigloss/");
@@ -81,6 +82,9 @@ public:
         shared_ptr<PBRMaterial> wrinkledPaper = make_shared<PBRMaterial>();
         wrinkledPaper->loadTextures("./resources/pbr/textures/pbr/wrinkled-paper/");
 
+        shared_ptr<PBRMaterial> suzanneMtl = make_shared<PBRMaterial>(vec3(1.0), 1.0, 0.1); // albedo metallic roughness
+        suzanne->setMaterial(suzanneMtl);
+
         spheres[0]->setMaterial(wood);
         spheres[1]->setMaterial(gold);
         spheres[2]->setMaterial(ornateCelticGold);
@@ -93,6 +97,7 @@ public:
         // Gui
         gui = make_shared<Gui>();
         gui->add("direction light", dirLight);
+        gui->add("suzanne", suzanne);
 
         // setting
         //setClearColor(vec3(0, 0, 0));
@@ -107,17 +112,13 @@ public:
     {
         for (int i = 0; i < spheres.size(); ++i)
             addObject("sphere" + to_string(i+1), spheres[i]);
-        //addObject("sphere0", sphere0);
 
-        //addObject("Rect", testRect);
-        //addObject("testCube", testCube);
+        addObject("suzanne", suzanne);
 
         //addLight("pointLight", pointLight1);
         addLight("direction light", dirLight);
         addLight("direction light2", dirLight2);
 
-        //addShader("myPhong", phong);
-        
         addEnvironmentMap(cubeMap);
 
         addSkybox(cubeMap);
@@ -129,10 +130,7 @@ public:
     {
         for (auto sphere : spheres)
             draw(sphere);
-        //draw(sphere0);
-
-        //draw(testCube, phong);
-        //draw(testRect, phong);
+        draw(suzanne);
     }
 
 private:
@@ -140,20 +138,16 @@ private:
     int windowHeight;
     shared_ptr<Camera> camera;
     vector<shared_ptr<Sphere>> spheres;
-    //shared_ptr<Sphere> sphere0;
+    shared_ptr<Model> suzanne;
 
     shared_ptr<PointLight> pointLight1;
     shared_ptr<DirectionalLight> dirLight;
     shared_ptr<DirectionalLight> dirLight2;
 
-    //shared_ptr<Shader> phong;
 
     shared_ptr<CubeMap> cubeMap;
 
     shared_ptr<Gui> gui;
-
-    //shared_ptr<Rectangle> testRect;
-    //shared_ptr<Cube> testCube;
 };
 
 int main()

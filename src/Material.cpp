@@ -132,8 +132,8 @@ void PBRMaterial::setIrradianceMap(Texture T)
 
 void PBRMaterial::init()
 {
-	albedo = vec3(1.0);		// RBG
-	metallic = 0.0f;		// [0, 1]
+	albedo = vec3(1.0);	// RBG
+	metallic = 0.0f;	// [0, 1]
 	roughness = 1.0f;	// [0, 1]
 	ao = 1.0f;
 
