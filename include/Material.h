@@ -82,7 +82,7 @@ public:
 	virtual void init() override;
 
 
-	vec3 albedo;		// RBG
+	vec3 albedo;		// RGB
 	float metallic;		// [0, 1]
 	float roughness;	// (0, 1]
 	float ao;

@@ -54,6 +54,28 @@ void Gui::add(string name, shared_ptr<Light> light)
     }
 }
 
+void Gui::add(string name, shared_ptr<Material> mtl)
+{
+    auto iter = lights.find(name);
+    // object name already exists
+    if (iter != lights.end())
+    {
+        cout << "Add Light GUI Failed! Material name \"" << name << "\" already exists!" << endl;
+        return;
+    }
+
+    materials[name] = mtl;
+    names.push_back(name);
+    cNames = new char *[names.size()];
+    for (int i = 0; i < names.size(); ++i)
+    {
+        cNames[i] = new char[names[i].size() + 1];
+        for (int j = 0; j < names[i].size(); ++j)
+            cNames[i][j] = names[i][j];
+        cNames[i][names[i].size()] = '\0';
+    }
+}
+
 void Gui::setUpContext(GLFWwindow *window_)
 {
     window = window_;
@@ -90,7 +112,22 @@ void Gui::show()
     if (iter != objects.end())
         objectGui(names[item]);
     else
-        lightGui(names[item]);
+    {
+        auto iter2 = lights.find(names[item]);
+        if (iter2 != lights.end())
+            lightGui(names[item]);
+        else
+        {
+            auto iter3 = materials.find(names[item]);
+            if (iter3 != materials.end())
+                mtlGUI(names[item]);
+        }
+    }
+
+    // show FPS on the bottom
+    ImGui::SetCursorPosY(ImGui::GetWindowHeight() - 20);
+    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 110);
+    ImGui::Text("FPS: %.2f", ImGui::GetIO().Framerate);
 
     ImGui::End();
 
@@ -168,6 +205,110 @@ void Gui::lightGui(string lightName)
         ImGui::DragFloat("linear", &pointL->linear, 0.001, 0, 0, "%.3f", 1); ImGui::SameLine();
         ImGui::DragFloat("quadratic", &pointL->quadratic, 0.001, 0, 0, "%.3f", 1);
         ImGui::PopItemWidth();
+    }
+}
+
+void Gui::mtlGUI(string mtlName)
+{
+    shared_ptr<Material> mtl = materials[mtlName];
+    // PBR material
+    if (mtl->usePBR)
+    {
+        shared_ptr<PBRMaterial> pbrMtl = dynamic_pointer_cast<PBRMaterial>(mtl);
+        ImVec2 imgSize(50, 50);
+        // albedo
+        if (pbrMtl->useAlbedoMap)
+        {
+            // Textures
+            ImGui::Text("Albedo:    "); ImGui::SameLine();
+            ImGui::Image((void *)(intptr_t)pbrMtl->albedoMap.getID(), imgSize);
+        }
+        else
+        {
+            vec3 albedo = pbrMtl->albedo;
+            float c[3] = { albedo.r, albedo.g, albedo.b };
+            ImGui::Text("Albedo:");
+            ImGui::ColorEdit3("", c);
+            pbrMtl->albedo = vec3(c[0], c[1], c[2]);
+        }
+        // metallic
+        if (pbrMtl->useMetallicMap)
+        {
+            ImGui::Text("Metallic:  "); ImGui::SameLine();
+            ImGui::Image((void *)(intptr_t)pbrMtl->metallicMap.getID(), imgSize);
+        }
+        else
+        {
+            ImGui::Text("Metallic:");
+            ImGui::SliderFloat("Metallic", &pbrMtl->metallic, 0.0f, 1.0f);
+        }
+        // roughness
+        if (pbrMtl->useRoughnessMap)
+        {
+            ImGui::Text("Roughness: "); ImGui::SameLine();
+            ImGui::Image((void *)(intptr_t)pbrMtl->roughnessMap.getID(), imgSize);
+        }
+        else
+        {
+            ImGui::Text("Roughness:");
+            ImGui::SliderFloat("Roughness", &pbrMtl->roughness, 0.0f, 1.0f);
+        }
+        if (pbrMtl->useNormalMap)
+        {
+            ImGui::Text("Normal Map:"); ImGui::SameLine();
+            ImGui::Image((void *)(intptr_t)pbrMtl->normalMap.getID(), imgSize);
+        }
+        if (pbrMtl->useAoMap)
+        {
+            ImGui::Text("Ao Map:    "); ImGui::SameLine();
+            ImGui::Image((void *)(intptr_t)pbrMtl->aoMap.getID(), imgSize);
+        }
+    }
+    else
+    {
+        ImVec2 imgSize(50, 50);
+        // ambient
+        vec3 ambient = mtl->ambient;
+        float c[3] = { ambient.r, ambient.g, ambient.b };
+        ImGui::Text("Ambient:");
+        ImGui::ColorEdit3("", c);
+        mtl->ambient = vec3(c[0], c[1], c[2]);
+        // diffuse
+        if (mtl->useDiffuseMap)
+        {
+            // Textures
+            ImGui::Text("Diffuse:    "); ImGui::SameLine();
+            ImGui::Image((void *)(intptr_t)mtl->diffuseMap.getID(), imgSize);
+        }
+        else
+        {
+            vec3 diffuse = mtl->diffuse;
+            float c[3] = { diffuse.r, diffuse.g, diffuse.b };
+            ImGui::Text("Diffuse:");
+            ImGui::ColorEdit3("", c);
+            mtl->diffuse = vec3(c[0], c[1], c[2]);
+        }
+        // specular
+        if (mtl->useSpecularMap)
+        {
+            ImGui::Text("Specular: "); ImGui::SameLine();
+            ImGui::Image((void *)(intptr_t)mtl->specularMap.getID(), imgSize);
+        }
+        else
+        {
+            vec3 specular = mtl->specular;
+            float c[3] = { specular.r, specular.g, specular.b };
+            ImGui::Text("Specular:");
+            ImGui::ColorEdit3("", c);
+            mtl->specular = vec3(c[0], c[1], c[2]);
+        }
+        // normal
+        if (mtl->useNormalMap)
+        {
+            ImGui::Text("Normal:  "); ImGui::SameLine();
+            ImGui::Image((void *)(intptr_t)mtl->normalMap.getID(), imgSize);
+        }
+
     }
 }
 

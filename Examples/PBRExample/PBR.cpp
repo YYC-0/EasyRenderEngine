@@ -98,6 +98,9 @@ public:
         gui = make_shared<Gui>();
         gui->add("direction light", dirLight);
         gui->add("suzanne", suzanne);
+        gui->add("suzanne mtl", suzanneMtl);
+        gui->add("wood mtl", wood);
+        gui->add("ornateCelticGold mtl", ornateCelticGold);
 
         // setting
         //setClearColor(vec3(0, 0, 0));
