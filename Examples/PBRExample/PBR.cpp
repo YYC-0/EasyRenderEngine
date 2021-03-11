@@ -131,9 +131,9 @@ public:
 
     virtual void renderLoop()
     {
-        for (auto sphere : spheres)
-            draw(sphere);
-        draw(suzanne);
+        //for (auto sphere : spheres)
+        //    draw(sphere);
+        //draw(suzanne);
     }
 
 private:

@@ -61,6 +61,7 @@ private:
 	// shaders
 	shared_ptr<Shader> pbrShader;
 	shared_ptr<Shader> phongShader;
+	shared_ptr<Shader> screenShader;
 
 	vec3 clearColor;
 
@@ -96,4 +97,12 @@ private:
 	// Mode
 	bool pbrMode;
 
+	// Post process
+	Rectangle screenQuad;
+	unsigned int framebuffer;
+	unsigned int renderTexture;
+	unsigned int postProcessFB;
+	unsigned int postProcessRenderTexture;
+	pair<unsigned int, unsigned int> createFrameBuffer(int width, int height);
+	unsigned int postProcessing();
 };

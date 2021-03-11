@@ -266,13 +266,11 @@ void CubeMap::generateBrdfLUTTexture()
     Rectangle rect;
     rect.bind();
 
-    glDisable(GL_CULL_FACE);
     glViewport(0, 0, 512, 512);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     rect.draw(brdfLUTShader);
 
-    glEnable(GL_CULL_FACE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

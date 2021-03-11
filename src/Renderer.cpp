@@ -54,10 +54,19 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
     cubeDepthMapShader = make_shared<Shader>("./shaders/point_shadows_depth.vert", "./shaders/point_shadows_depth.frag", "./shaders/point_shadows_depth.geom");
     phongShader = Shader::phong();
     addShader("phong", phongShader);
+    screenShader = make_shared<Shader>("./shaders/texture_to_screen.vert", "./shaders/texture_to_screen.frag");
+    screenShader->setAttrI("screenTexture", 0);
+
+    pair<unsigned int, unsigned int> bufferIDs = createFrameBuffer(windowWidth, windowHeight);
+    framebuffer = bufferIDs.first;
+    renderTexture = bufferIDs.second;
+    bufferIDs = createFrameBuffer(windowWidth, windowHeight);
+    postProcessFB = bufferIDs.first;
+    postProcessRenderTexture = bufferIDs.second;
+    screenQuad.bind();
 
     initShadowMap();
     initCubeShadowMap();
-
 
     // print gl versions
     //const GLubyte *renderer = glGetString(GL_RENDERER);
@@ -137,19 +146,25 @@ void Renderer::run()
         }
         
         // render scene
+        // render to texture
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glViewport(0, 0, window->getWidth(), window->getHeight());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0);
-        // draw objects
-        // user render loop
-        //glDisable(GL_CULL_FACE);
-        renderLoop();
-
-        // draw skybox
-        if (skybox)
-        {
+        glClearColor(clearColor.x, clearColor.y, clearColor.z, 1.0); 
+        glEnable(GL_DEPTH_TEST);
+        for (auto &obj : renderObjects)
+            draw(obj.second);
+        if (skybox) // draw skybox
             skybox->drawAsSkybox(mat4(mat3(camera->getViewMatrix())), camera->getProjectionMatrix());
-        }
+        // post processing
+        unsigned int screenTexture = postProcessing();
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        // render texture to screen
+        glDisable(GL_DEPTH_TEST);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, screenTexture);
+        screenQuad.draw(screenShader);
 
         if(gui)
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -158,7 +173,8 @@ void Renderer::run()
         glfwSwapBuffers(glfwWindow);
         glfwPollEvents();
 
-        //cout << "FPS: " << 1.0 / deltaTime << '\r';
+        // user render loop
+        renderLoop();
     }
 
 }
@@ -442,6 +458,48 @@ void Renderer::initCubeShadowMap()
 void Renderer::drawSkybox()
 {
 
+}
+
+// Create a framebuffer
+// return framebuffer and color attachment texture
+pair<unsigned int, unsigned int> Renderer::createFrameBuffer(int width, int height)
+{
+    unsigned int fb;
+    glGenFramebuffers(1, &fb);
+    glBindFramebuffer(GL_FRAMEBUFFER, fb);
+
+    // create a color attachment texture
+    unsigned int texColorBuffer;
+    glGenTextures(1, &texColorBuffer);
+    glBindTexture(GL_TEXTURE_2D, texColorBuffer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texColorBuffer, 0);
+
+    // create a renderbuffer object for depth and stencil attachment
+    unsigned int rbo;
+    glGenRenderbuffers(1, &rbo);
+    glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+    // check completeness
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return {fb, texColorBuffer};
+}
+
+// Post processing
+// return the final texture
+unsigned int Renderer::postProcessing(vector<shared_ptr<Shader>> postProcessingShader)
+{
 }
 
 void Renderer::renderLoop()
