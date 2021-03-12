@@ -34,8 +34,6 @@ public:
         pointLight3 = make_shared<PointLight>(vec3(-11.1, 2.6, -0.3));
         pointLight3->setAttenuation(1.0f, 0.045f, 0.0075f);
 
-        // create shader    
-        shader = Shader::phong();
 
         // create meshes
         cube = make_shared<Cube>(1.0, 1.0, 1.0); // size
@@ -82,8 +80,6 @@ public:
         addLight("pointLight2", pointLight2);
         addLight("pointLight3", pointLight3);
 
-        addShader("phong", shader);
-
         addSkybox(skybox);
 
         addGui(gui);
@@ -91,8 +87,6 @@ public:
 
     virtual void renderLoop()
     {
-        draw(sponza, shader);
-        draw(cube, shader);
     }
 
 private:
@@ -108,7 +102,6 @@ private:
     shared_ptr<PointLight> pointLight2;
     shared_ptr<PointLight> pointLight3;
 
-    shared_ptr<Shader> shader;
 
     shared_ptr<CubeMap> skybox;
 

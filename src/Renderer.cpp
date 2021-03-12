@@ -156,9 +156,9 @@ void Renderer::run()
             draw(obj.second);
         if (skybox) // draw skybox
             skybox->drawAsSkybox(mat4(mat3(camera->getViewMatrix())), camera->getProjectionMatrix());
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         // post processing
         unsigned int screenTexture = postProcessing();
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         // render texture to screen
         glDisable(GL_DEPTH_TEST);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -269,6 +269,12 @@ void Renderer::addEnvironmentMap(shared_ptr<CubeMap> envMap_)
 
     glActiveTexture(GL_TEXTURE9);
     glBindTexture(GL_TEXTURE_2D, envMap->getBrdfLUTTextureID());
+}
+
+// Add postprocessing shader by sequence
+void Renderer::addPostprocessingShader(shared_ptr<Shader> shader)
+{
+    postProcessingShaders.push_back(shader);
 }
 
 void Renderer::setClearColor(vec3 color)
@@ -498,8 +504,24 @@ pair<unsigned int, unsigned int> Renderer::createFrameBuffer(int width, int heig
 
 // Post processing
 // return the final texture
-unsigned int Renderer::postProcessing(vector<shared_ptr<Shader>> postProcessingShader)
+unsigned int Renderer::postProcessing()
 {
+    glDisable(GL_DEPTH_TEST);
+
+    for (auto &shader : postProcessingShaders)
+    {
+        // copy renderTexture to postProcessRenderTexture
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, postProcessFB);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, window->getWidth(), window->getHeight());
+
+        glBindTexture(GL_TEXTURE_2D, postProcessRenderTexture);
+        glClear(GL_COLOR_BUFFER_BIT);
+        screenQuad.draw(shader);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+    return renderTexture;
 }
 
 void Renderer::renderLoop()

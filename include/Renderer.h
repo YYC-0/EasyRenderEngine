@@ -36,6 +36,7 @@ public:
 	void addSkybox(shared_ptr<CubeMap> skybox_);
 	void addGui(shared_ptr<Gui> gui_);
 	void addEnvironmentMap(shared_ptr<CubeMap> envMap_);
+	void addPostprocessingShader(shared_ptr<Shader> shader);
 
 	void setClearColor(vec3 color);
 	void setCamera(shared_ptr<Camera> camera_);
@@ -103,6 +104,7 @@ private:
 	unsigned int renderTexture;
 	unsigned int postProcessFB;
 	unsigned int postProcessRenderTexture;
+	vector<shared_ptr<Shader>> postProcessingShaders;
 	pair<unsigned int, unsigned int> createFrameBuffer(int width, int height);
 	unsigned int postProcessing();
 };
