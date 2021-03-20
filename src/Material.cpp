@@ -1,63 +1,24 @@
 #include "../include/Material.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "../include/stb_image.h"
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
 #include <iostream>
-
-bool Texture::load(string imgPath, TextureType type_)
-{
-	glGenTextures(1, &id);
-	int width, height, nrComponents;
-	stbi_set_flip_vertically_on_load(true);
-	unsigned char* data = stbi_load(imgPath.c_str(), &width, &height, &nrComponents, 0);
-	if (data)
-	{
-		GLenum format;
-		if (nrComponents == 1)
-			format = GL_RED;
-		else if (nrComponents == 3)
-			format = GL_RGB;
-		else if (nrComponents == 4)
-			format = GL_RGBA;
-		
-		glBindTexture(GL_TEXTURE_2D, id);
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		stbi_image_free(data);
-		return true;
-	}
-	else
-	{
-		cout << "Texture \"" << imgPath << "\" failed to load!" << endl;
-		return false;
-	}
-}
 
 Material::Material()
 {
 	init();
 }
 
-void Material::setTexture(Texture texture, TextureType type)
+void Material::setTexture(Texture texture, MaterialMapType type)
 {
 	switch (type)
 	{
-	case TextureType::Diffuse:
+	case MaterialMapType::Diffuse:
 		diffuseMap = texture;
 		useDiffuseMap = true;
 		break;
-	case TextureType::Normal:
+	case MaterialMapType::Normal:
 		normalMap = texture;
 		useNormalMap = true;
 		break;
-	case TextureType::Specular:
+	case MaterialMapType::Specular:
 		specularMap = texture;
 		useSpecularMap = true;
 		break;
@@ -66,10 +27,10 @@ void Material::setTexture(Texture texture, TextureType type)
 	}
 }
 
-void Material::loadTexture(std::string path, TextureType type)
+void Material::loadTexture(std::string path, MaterialMapType type)
 {
 	Texture t;
-	t.load(path, type);
+	t.load(path);
 	setTexture(t, type);
 }
 
@@ -85,28 +46,28 @@ void Material::init()
 	usePBR = false;
 }
 
-void PBRMaterial::loadTexture(std::string path, TextureType type)
+void PBRMaterial::loadTexture(std::string path, MaterialMapType type)
 {
 	switch (type)
 	{
-	case TextureType::Albedo:
-		albedoMap.load(path, TextureType::Albedo);
+	case MaterialMapType::Albedo:
+		albedoMap.load(path);
 		useAlbedoMap = true;
 		break;
-	case TextureType::Normal:
-		normalMap.load(path, TextureType::Normal);
+	case MaterialMapType::Normal:
+		normalMap.load(path);
 		useNormalMap = true;
 		break;
-	case TextureType::Metallic:
-		metallicMap.load(path, TextureType::Metallic);
+	case MaterialMapType::Metallic:
+		metallicMap.load(path);
 		useMetallicMap = true;
 		break;
-	case TextureType::Roughness:
-		roughnessMap.load(path, TextureType::Roughness);
+	case MaterialMapType::Roughness:
+		roughnessMap.load(path);
 		useRoughnessMap = true;
 		break;
-	case TextureType::Ao:
-		aoMap.load(path, TextureType::Ao);
+	case MaterialMapType::Ao:
+		aoMap.load(path);
 		useAoMap = true;
 		break;
 	default:
@@ -118,11 +79,11 @@ void PBRMaterial::loadTexture(std::string path, TextureType type)
 // load file albedo.png, ao.png, metallic.png, normal.png, roughness.png
 void PBRMaterial::loadTextures(std::string fileFolderPath)
 {
-	loadTexture(fileFolderPath + "/albedo.png", TextureType::Albedo);
-	loadTexture(fileFolderPath + "/ao.png", TextureType::Ao);
-	loadTexture(fileFolderPath + "/metallic.png", TextureType::Metallic);
-	loadTexture(fileFolderPath + "/normal.png", TextureType::Normal);
-	loadTexture(fileFolderPath + "/roughness.png", TextureType::Roughness);
+	loadTexture(fileFolderPath + "/albedo.png", MaterialMapType::Albedo);
+	loadTexture(fileFolderPath + "/ao.png", MaterialMapType::Ao);
+	loadTexture(fileFolderPath + "/metallic.png", MaterialMapType::Metallic);
+	loadTexture(fileFolderPath + "/normal.png", MaterialMapType::Normal);
+	loadTexture(fileFolderPath + "/roughness.png", MaterialMapType::Roughness);
 }
 
 void PBRMaterial::setIrradianceMap(Texture T)

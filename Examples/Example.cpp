@@ -40,8 +40,8 @@ public:
         // ---cube material
         shared_ptr<Material> cubeMaterial = make_shared<Material>();
         shared_ptr<Material> planeMaterial = make_shared<Material>();
-        cubeMaterial->loadTexture("./resources/brickwall.jpg", TextureType::Diffuse);
-        cubeMaterial->loadTexture("./resources/brickwall_normal.jpg", TextureType::Normal);
+        cubeMaterial->loadTexture("./resources/brickwall.jpg", MaterialMapType::Diffuse);
+        cubeMaterial->loadTexture("./resources/brickwall_normal.jpg", MaterialMapType::Normal);
         cube->setMaterial(cubeMaterial);
 
         // sponza

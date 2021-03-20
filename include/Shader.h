@@ -35,6 +35,8 @@ public:
 	void setCamera(const Camera& camera);
 	void setMeterial(shared_ptr<Material> mtl);
 	void setPBRMeterial(shared_ptr<PBRMaterial> mtl);
+	void setTexture(const std::string &name, int idx, Texture *texture);
+	void applyTextures();
 
 private:
 	unsigned int ID; // program ID
@@ -60,4 +62,6 @@ private:
 	std::map<std::string, glm::vec4> attributesVec4;
 	std::map<std::string, glm::mat4> attributesMat4;
 	std::map<std::string, glm::mat3> attributesMat3;
+
+	std::map<int, Texture*> textures;
 };

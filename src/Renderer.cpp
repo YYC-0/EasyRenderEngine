@@ -55,11 +55,11 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
     phongShader = Shader::phong();
     addShader("phong", phongShader);
     screenShader = make_shared<Shader>("./shaders/texture_to_screen.vert", "./shaders/texture_to_screen.frag");
-    screenShader->setAttrI("screenTexture", 0);
+    screenShader->setTexture("screenTexture", 0, &renderTexture);
 
     pair<unsigned int, unsigned int> bufferIDs = createFrameBuffer(windowWidth, windowHeight);
     framebuffer = bufferIDs.first;
-    renderTexture = bufferIDs.second;
+    renderTexture.set(bufferIDs.second, TextureType::TEXTURE_2D);
     bufferIDs = createFrameBuffer(windowWidth, windowHeight);
     postProcessFB = bufferIDs.first;
     postProcessRenderTexture = bufferIDs.second;
@@ -67,6 +67,8 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
 
     initShadowMap();
     initCubeShadowMap();
+    phongShader->setTexture("shadowMap", 0, &shadowMap);
+    phongShader->setTexture("cubeDepthMap", 1, &cubeShadowMap);
 
     // print gl versions
     //const GLubyte *renderer = glGetString(GL_RENDERER);
@@ -128,22 +130,6 @@ void Renderer::run()
                 light.second->setShaderAttr(shader, n++);
             }
         }
-        if (pbrMode)
-        {
-            // ´ýÐÞ¸Ä------------------------------------------------------------------------------
-            pbrShader->setAttrI("irradianceMap", 7);
-            pbrShader->setAttrI("prefilterMap", 8);
-            pbrShader->setAttrI("brdfLUT", 9);
-
-            glActiveTexture(GL_TEXTURE7);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, envMap->getIrradianceMapID());
-
-            glActiveTexture(GL_TEXTURE8);
-            glBindTexture(GL_TEXTURE_CUBE_MAP, envMap->getPrefilterMapID());
-
-            glActiveTexture(GL_TEXTURE9);
-            glBindTexture(GL_TEXTURE_2D, envMap->getBrdfLUTTextureID());
-        }
         
         // render scene
         // render to texture
@@ -158,12 +144,10 @@ void Renderer::run()
             skybox->drawAsSkybox(mat4(mat3(camera->getViewMatrix())), camera->getProjectionMatrix());
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         // post processing
-        unsigned int screenTexture = postProcessing();
+        postProcessing();
         // render texture to screen
         glDisable(GL_DEPTH_TEST);
         glClear(GL_COLOR_BUFFER_BIT);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, screenTexture);
         screenQuad.draw(screenShader);
 
         if(gui)
@@ -174,7 +158,7 @@ void Renderer::run()
         glfwPollEvents();
 
         // user render loop
-        renderLoop();
+        userEvents();
     }
 
 }
@@ -257,18 +241,10 @@ void Renderer::addEnvironmentMap(shared_ptr<CubeMap> envMap_)
     if (!pbrShader)
         pbrShader = Shader::pbr();
 
-    pbrShader->setAttrI("irradianceMap", 7);
-    pbrShader->setAttrI("prefilterMap", 8);
-    pbrShader->setAttrI("brdfLUT", 9);
+    pbrShader->setTexture("irradianceMap", 7, &envMap_->getIrradianceMap());
+    pbrShader->setTexture("prefilterMap", 8, &envMap_->getPrefilterMapID());
+    pbrShader->setTexture("brdfLUT", 9, &envMap_->getBrdfLUTTextureID());
 
-    glActiveTexture(GL_TEXTURE7);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, envMap->getIrradianceMapID());
-
-    glActiveTexture(GL_TEXTURE8);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, envMap->getPrefilterMapID());
-
-    glActiveTexture(GL_TEXTURE9);
-    glBindTexture(GL_TEXTURE_2D, envMap->getBrdfLUTTextureID());
 }
 
 // Add postprocessing shader by sequence
@@ -349,9 +325,8 @@ void Renderer::renderShadowMap()
     }
 
     glCullFace(GL_BACK);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
-
+   // glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
 
     // render point light shadow map
     int pointLightNum = 0;
@@ -394,8 +369,8 @@ void Renderer::renderShadowMap()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glCullFace(GL_BACK);
 
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeDepthMap);
+    //glActiveTexture(GL_TEXTURE1);
+    //glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeDepthMap);
 }
 
 void Renderer::initShadowMap()
@@ -429,6 +404,8 @@ void Renderer::initShadowMap()
             std::cout << "Framebuffer not complete!" << std::endl;
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+
+    shadowMap.set(depthMaps, TextureType::TEXTURE_2D_ARRAY);
 }
 
 void Renderer::initCubeShadowMap()
@@ -459,6 +436,8 @@ void Renderer::initCubeShadowMap()
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         std::cout << "Point light shadow framebuffer not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    cubeShadowMap.set(cubeDepthMap, TextureType::TEXTURE_CUBE_MAP_ARRAY);
 }
 
 void Renderer::drawSkybox()
@@ -503,8 +482,7 @@ pair<unsigned int, unsigned int> Renderer::createFrameBuffer(int width, int heig
 }
 
 // Post processing
-// return the final texture
-unsigned int Renderer::postProcessing()
+void Renderer::postProcessing()
 {
     glDisable(GL_DEPTH_TEST);
 
@@ -521,24 +499,10 @@ unsigned int Renderer::postProcessing()
         screenQuad.draw(shader);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
-    return renderTexture;
 }
 
-void Renderer::renderLoop()
+void Renderer::userEvents()
 {
-    //// light properties
-    //glm::vec3 lightColor;
-    //lightColor.x = sin(glfwGetTime() * 2.0f);
-    //lightColor.y = sin(glfwGetTime() * 0.7f);
-    //lightColor.z = sin(glfwGetTime() * 1.3f);
-    //pointLight.setColor(lightColor);
-
-    //mat4 trans = glm::mat4(1.0f);
-    //trans = glm::translate(trans, vec3(sin(glfwGetTime()), 0.0, 0.0));
-    //cube.setPosition(vec3(sin(glfwGetTime()), 0.0, 0.0));
-
-    //cube.draw(shader);
-    //lightCube.draw(lightCubeShader);
 }
 
 void Renderer::processInput()

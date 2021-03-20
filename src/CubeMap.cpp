@@ -23,6 +23,7 @@ CubeMap::CubeMap(const vector<string>& facesPath)
 
 void CubeMap::load(const vector<string>& facesPath)
 {
+    unsigned int cubeMapID;
     glGenTextures(1, &cubeMapID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapID);
 
@@ -48,6 +49,7 @@ void CubeMap::load(const vector<string>& facesPath)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
+    cubeMap.set(cubeMapID, TextureType::TEXTURE_CUBE_MAP);
 }
 
 void CubeMap::loadHdr(const string &path, int cubeSideLength)
@@ -58,10 +60,11 @@ void CubeMap::loadHdr(const string &path, int cubeSideLength)
     stbi_set_flip_vertically_on_load(true);
 
     float *data = stbi_loadf(path.c_str(), &width, &height, &nrChannels, 0);
+    unsigned int hdrTextureID = 0;
     if (data)
     {
-        glGenTextures(1, &hdrTexture);
-        glBindTexture(GL_TEXTURE_2D, hdrTexture);
+        glGenTextures(1, &hdrTextureID);
+        glBindTexture(GL_TEXTURE_2D, hdrTextureID);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, data);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -73,6 +76,7 @@ void CubeMap::loadHdr(const string &path, int cubeSideLength)
     {
         std::cout << "HDR image failed to load at path: " << path << std::endl;
     }
+    Texture hdrTexture(hdrTextureID, TextureType::TEXTURE_2D);
 
     stbi_image_free(data);
 
@@ -88,6 +92,7 @@ void CubeMap::loadHdr(const string &path, int cubeSideLength)
     //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, captureRBO);
 
     // setup cubemap to render to and attach to framebuffer
+    unsigned int cubeMapID;
     glGenTextures(1, &cubeMapID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapID);
     for (unsigned int i = 0; i < 6; ++i)
@@ -99,14 +104,13 @@ void CubeMap::loadHdr(const string &path, int cubeSideLength)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    cubeMap.set(cubeMapID, TextureType::TEXTURE_CUBE_MAP);
 
     // convert HDR equirectangular environment map to cubemap equivalent
     shared_ptr<Shader> equirectangularToCubemapShader = make_shared<Shader>("Shaders/cube_map.vert", "Shaders/equirectangular_to_cubemap.frag");
     equirectangularToCubemapShader->use();
-    equirectangularToCubemapShader->setAttrI("equirectangularMap", 0);
     equirectangularToCubemapShader->setAttrMat4("projection", captureProjection);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, hdrTexture);
+    equirectangularToCubemapShader->setTexture("equirectangularMap", 0, &hdrTexture);
 
     glViewport(0, 0, cubeSideLength, cubeSideLength);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
@@ -132,8 +136,7 @@ void CubeMap::drawAsSkybox(const glm::mat4 & view, const glm::mat4 & projection)
     skyboxShader->setAttrMat4("view", view);
     skyboxShader->setAttrMat4("projection", projection);
     skyboxShader->setAttrB("gammaCorrection", gammaCorrection);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapID);
+    skyboxShader->setTexture("skybox", 0, &cubeMap);
 
     box.draw(skyboxShader);
 
@@ -152,6 +155,7 @@ void CubeMap::preComputeMaps()
 // generate irradiance map from the environment map
 void CubeMap::generateIrradianceMap()
 {
+    unsigned int irradianceMapID;
     glGenTextures(1, &irradianceMapID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, irradianceMapID);
     for (unsigned int i = 0; i < 6; ++i)
@@ -161,6 +165,7 @@ void CubeMap::generateIrradianceMap()
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    irradianceMap.set(irradianceMapID, TextureType::TEXTURE_CUBE_MAP);
 
     unsigned int captureFBO;
     glGenFramebuffers(1, &captureFBO);
@@ -169,10 +174,8 @@ void CubeMap::generateIrradianceMap()
 
     shared_ptr<Shader> convolutionShader = make_shared<Shader>("Shaders/cube_map.vert", "Shaders/irradiance_convolution.frag");
     convolutionShader->use();
-    convolutionShader->setAttrI("environmentMap", 0);
     convolutionShader->setAttrMat4("projection", captureProjection);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapID);
+    convolutionShader->setTexture("environmentMap", 0, &cubeMap);
 
     glViewport(0, 0, 32, 32);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
@@ -193,6 +196,7 @@ void CubeMap::generateIrradianceMap()
 // generate prefilter map for specular IBL
 void CubeMap::generatePrefilterMap()
 {
+    unsigned int prefilterMapID;
     glGenTextures(1, &prefilterMapID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, prefilterMapID);
     for (unsigned int i = 0; i < 6; ++i)
@@ -204,6 +208,7 @@ void CubeMap::generatePrefilterMap()
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // generate mipmaps for the cubemap so OpenGL automatically allocates the required memory.
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
+    prefilterMap.set(prefilterMapID, TextureType::TEXTURE_CUBE_MAP);
 
     unsigned int captureFBO;
     glGenFramebuffers(1, &captureFBO);
@@ -212,10 +217,8 @@ void CubeMap::generatePrefilterMap()
 
     shared_ptr<Shader> prefilterShader = make_shared<Shader>("Shaders/cube_map.vert", "Shaders/prefilter.frag");
     prefilterShader->use();
-    prefilterShader->setAttrI("environmentMap", 0);
     prefilterShader->setAttrMat4("projection", captureProjection);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, cubeMapID);
+    prefilterShader->setTexture("environmentMap", 0, &cubeMap);
 
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     unsigned int maxMipLevels = 5;
@@ -246,6 +249,7 @@ void CubeMap::generatePrefilterMap()
 
 void CubeMap::generateBrdfLUTTexture()
 {
+    unsigned int brdfLUTTextureID;
     glGenTextures(1, &brdfLUTTextureID);
 
     glBindTexture(GL_TEXTURE_2D, brdfLUTTextureID);
@@ -254,6 +258,7 @@ void CubeMap::generateBrdfLUTTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    brdfLUTTexture.set(brdfLUTTextureID, TextureType::TEXTURE_2D);
 
     unsigned int captureFBO;
     glGenFramebuffers(1, &captureFBO);
@@ -278,7 +283,6 @@ void CubeMap::init()
 {
     gammaCorrection = false;
     skyboxShader = make_shared<Shader>("Shaders/skybox.vert", "Shaders/skybox.frag");
-    skyboxShader->setAttrI("skybox", 0);
     box.bind();
 
     // set up projection and view matrices for capturing data onto the 6 cubemap face directions

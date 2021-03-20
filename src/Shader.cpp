@@ -32,6 +32,7 @@ Shader::Shader(string vertexPath_, string fragmentPath_, string geometryPath_)
 	vertexPath = vertexPath_;
 	fragmentPath = fragmentPath_;
 	geometryPath = geometryPath_;
+
 	setAttrI("shadowMap", 0);
 	setAttrI("cubeDepthMap", 1);
 	compile();
@@ -104,26 +105,26 @@ void Shader::setMeterial(shared_ptr<Material> mtl)
 	setAttrB("useSpecularMap", mtl->useSpecularMap);
 	setAttrB("useNormalMap", mtl->useNormalMap);
 
+	setTexture("mtl.diffuseT", 2, &mtl->diffuseMap);
+	setTexture("mtl.normalT", 3, &mtl->normalMap);
+	setTexture("mtl.specularT", 4, &mtl->specularMap);
 
-	setAttrI("mtl.diffuseT", 2);
-	setAttrI("mtl.normalT", 3);
-	setAttrI("mtl.specularT", 4);
 	// textures
-	if (mtl->useDiffuseMap)
-	{
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, mtl->diffuseMap.getID());
-	}
-	if (mtl->useNormalMap)
-	{
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, mtl->normalMap.getID());
-	}
-	if (mtl->useSpecularMap)
-	{
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, mtl->specularMap.getID());
-	}
+	//if (mtl->useDiffuseMap)
+	//{
+	//	glActiveTexture(GL_TEXTURE2);
+	//	glBindTexture(GL_TEXTURE_2D, mtl->diffuseMap.getID());
+	//}
+	//if (mtl->useNormalMap)
+	//{
+	//	glActiveTexture(GL_TEXTURE3);
+	//	glBindTexture(GL_TEXTURE_2D, mtl->normalMap.getID());
+	//}
+	//if (mtl->useSpecularMap)
+	//{
+	//	glActiveTexture(GL_TEXTURE4);
+	//	glBindTexture(GL_TEXTURE_2D, mtl->specularMap.getID());
+	//}
 }
 
 void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
@@ -180,6 +181,30 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 	else
 		setAttrF("mtl.ao", mtl->ao);
 
+}
+
+void Shader::setTexture(const std::string &name, int idx, Texture *texture)
+{
+	if (idx < 0 || idx >= 32)
+	{
+		cout << "Index out of range!" << endl;
+		textures[0] = texture;
+		setAttrI(name, 0);
+	}
+	else
+	{
+		textures[idx] = texture;
+		setAttrI(name, idx);
+	}
+}
+
+void Shader::applyTextures()
+{
+	for (auto &iter : textures)
+	{
+		glActiveTexture(GL_TEXTURE0 + iter.first);
+		glBindTexture(iter.second->getType(), iter.second->getID());
+	}
 }
 
 void Shader::compile()

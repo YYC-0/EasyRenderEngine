@@ -54,6 +54,7 @@ void Object::draw(shared_ptr<Shader> shader)
 			shader->setMeterial(materials[i]);
 
 		shader->setAttributes();
+		shader->applyTextures();
 
 		glBindVertexArray(VAOs[i]);
 		glDrawElements(GL_TRIANGLES, indices[i].size(), GL_UNSIGNED_INT, 0);
@@ -479,6 +480,7 @@ void Model::draw(shared_ptr<Shader> shader)
 		shader->setMeterial(mtl);
 
 		shader->setAttributes();
+		shader->applyTextures();
 
 		glBindVertexArray(VAOs[i]);
 		glDrawElements(GL_TRIANGLES, indices[i].size(), GL_UNSIGNED_INT, 0);
@@ -549,7 +551,7 @@ void Model::loadMaterialLib(string path)
 				texPath = tokens[1];
 			else
 				texPath = dir + tokens[1];
-			mtl->loadTexture(texPath, TextureType::Diffuse);
+			mtl->loadTexture(texPath, MaterialMapType::Diffuse);
 		}
 		else if (tokens[0] == "map_Ks")
 		{
@@ -558,7 +560,7 @@ void Model::loadMaterialLib(string path)
 				texPath = tokens[1];
 			else
 				texPath = dir + tokens[1];
-			mtl->loadTexture(texPath, TextureType::Specular);
+			mtl->loadTexture(texPath, MaterialMapType::Specular);
 		}
 		else if (tokens[0] == "map_Bump")
 		{
@@ -567,7 +569,7 @@ void Model::loadMaterialLib(string path)
 				texPath = tokens[1];
 			else
 				texPath = dir + tokens[1];
-			mtl->loadTexture(texPath, TextureType::Normal);
+			mtl->loadTexture(texPath, MaterialMapType::Normal);
 		}
 	}
 	if (mtlName != "")

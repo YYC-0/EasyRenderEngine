@@ -25,7 +25,7 @@ public:
 	void run();
 	virtual void addResources();
 
-	virtual void renderLoop();
+	virtual void userEvents();
 	virtual void processInput();
 
 	void draw(shared_ptr<Object> object, shared_ptr<Shader> shader = nullptr);
@@ -75,6 +75,8 @@ private:
 	shared_ptr<Shader> depthMapShader;
 	shared_ptr<Shader> cubeDepthMapShader;
 	vector<GLuint> depthMapFBOs;
+	Texture shadowMap;
+	Texture cubeShadowMap;
 	GLuint cubeDepthMapFBO;
 	GLuint depthMaps;	 // directional light shadow array texture
 	GLuint cubeDepthMap; // point light shadow array texture
@@ -101,10 +103,10 @@ private:
 	// Post process
 	Rectangle screenQuad;
 	unsigned int framebuffer;
-	unsigned int renderTexture;
+	Texture renderTexture;
 	unsigned int postProcessFB;
 	unsigned int postProcessRenderTexture;
 	vector<shared_ptr<Shader>> postProcessingShaders;
 	pair<unsigned int, unsigned int> createFrameBuffer(int width, int height);
-	unsigned int postProcessing();
+	void postProcessing();
 };

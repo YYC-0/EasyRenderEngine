@@ -129,7 +129,7 @@ public:
         addGui(gui);
     }
 
-    virtual void renderLoop()
+    virtual void userEvents()
     {
         //for (auto sphere : spheres)
         //    draw(sphere);
