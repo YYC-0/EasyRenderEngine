@@ -22,10 +22,10 @@ public:
 	void setGammaCorrection(bool b) { gammaCorrection = b; }
 	void preComputeMaps(); // generate irradianceMap, prefilterMap, brdfLUTTexture for IBL
 
-	Texture& getCubeMap() { return cubeMap; }
-	Texture& getIrradianceMap() { return irradianceMap; }
-	Texture& getPrefilterMapID() { return prefilterMap; }
-	Texture& getBrdfLUTTextureID() { return brdfLUTTexture; }
+	shared_ptr<Texture> getCubeMap() { return cubeMap; }
+	shared_ptr<Texture> getIrradianceMap() { return irradianceMap; }
+	shared_ptr<Texture> getPrefilterMapID() { return prefilterMap; }
+	shared_ptr<Texture> getBrdfLUTTextureID() { return brdfLUTTexture; }
 
 private:
 	void init();
@@ -36,11 +36,11 @@ private:
 	Cube box;
 
 	bool gammaCorrection;
-	Texture cubeMap;
+	shared_ptr<Texture> cubeMap;
 
-	Texture irradianceMap;
-	Texture prefilterMap; // used for specular IBL
-	Texture brdfLUTTexture;
+	shared_ptr<Texture> irradianceMap;
+	shared_ptr<Texture> prefilterMap; // used for specular IBL
+	shared_ptr<Texture> brdfLUTTexture;
 
 	shared_ptr<Shader> skyboxShader;
 

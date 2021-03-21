@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <string>
+#include <memory>
 #include "Texture.h"
 using namespace glm;
 using namespace std;
@@ -25,11 +26,9 @@ class Material
 {
 public:
 	Material();
-	Material(vec3 ambient_, vec3 diffuse_, vec3 specular_, float shininess_) :
-		ambient(ambient_), diffuse(diffuse_), specular(specular_), shininess(shininess_),
-		useDiffuseMap(false), useNormalMap(false), useSpecularMap(false), usePBR(false) {}
+	Material(vec3 ambient_, vec3 diffuse_, vec3 specular_, float shininess_);
 
-	void setTexture(Texture texture, MaterialMapType type);
+	void setTexture(shared_ptr<Texture> texture, MaterialMapType type);
 	virtual void loadTexture(std::string path, MaterialMapType type);
 	virtual void init();
 
@@ -43,9 +42,9 @@ public:
 	float shininess;
 
 	// textures
-	Texture diffuseMap;
-	Texture normalMap;
-	Texture specularMap;
+	shared_ptr<Texture> diffuseMap;
+	shared_ptr<Texture> normalMap;
+	shared_ptr<Texture> specularMap;
 
 	bool usePBR;
 };
@@ -53,20 +52,14 @@ public:
 class PBRMaterial : public Material
 {
 public:
-	PBRMaterial() { init(); };
-	PBRMaterial(vec3 albedo_, float metallic_, float roughness_, float ao_ = 1.0f) :
-		albedo(albedo_), metallic(metallic_), roughness(roughness_), ao(ao_),
-		useAlbedoMap(false), useNormalMap(false), useMetallicMap(false), 
-		useRoughnessMap(false), useAoMap(false)
-	{
-		usePBR = true;
-	}
+	PBRMaterial();
+	PBRMaterial(vec3 albedo_, float metallic_, float roughness_, float ao_ = 1.0f);
 
 	virtual void loadTexture(std::string path, MaterialMapType type);
 	void loadTextures(std::string fileFolderPath);
-	void setIrradianceMap(Texture T);
-	void setPrefilterMap(Texture T) { prefilterMap = T; }
-	void setBrdfLUT(Texture T) { brdfLUT = T; }
+	void setIrradianceMap(shared_ptr<Texture> T) { irradianceMap = T; }
+	void setPrefilterMap(shared_ptr<Texture> T) { prefilterMap = T; }
+	void setBrdfLUT(shared_ptr<Texture> T) { brdfLUT = T; }
 	virtual void init() override;
 
 
@@ -81,12 +74,12 @@ public:
 	bool useRoughnessMap;
 	bool useAoMap;
 
-	Texture albedoMap;
-	Texture normalMap;
-	Texture metallicMap;
-	Texture roughnessMap;
-	Texture aoMap;
-	Texture irradianceMap;
-	Texture prefilterMap;
-	Texture brdfLUT;
+	shared_ptr<Texture> albedoMap;
+	shared_ptr<Texture> normalMap;
+	shared_ptr<Texture> metallicMap;
+	shared_ptr<Texture> roughnessMap;
+	shared_ptr<Texture> aoMap;
+	shared_ptr<Texture> irradianceMap;
+	shared_ptr<Texture> prefilterMap;
+	shared_ptr<Texture> brdfLUT;
 };

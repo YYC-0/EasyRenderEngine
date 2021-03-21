@@ -49,7 +49,7 @@ void CubeMap::load(const vector<string>& facesPath)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
-    cubeMap.set(cubeMapID, TextureType::TEXTURE_CUBE_MAP);
+    cubeMap->set(cubeMapID, TextureType::TEXTURE_CUBE_MAP);
 }
 
 void CubeMap::loadHdr(const string &path, int cubeSideLength)
@@ -76,7 +76,7 @@ void CubeMap::loadHdr(const string &path, int cubeSideLength)
     {
         std::cout << "HDR image failed to load at path: " << path << std::endl;
     }
-    Texture hdrTexture(hdrTextureID, TextureType::TEXTURE_2D);
+    shared_ptr<Texture> hdrTexture = make_shared<Texture>(hdrTextureID, TextureType::TEXTURE_2D);
 
     stbi_image_free(data);
 
@@ -104,13 +104,13 @@ void CubeMap::loadHdr(const string &path, int cubeSideLength)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    cubeMap.set(cubeMapID, TextureType::TEXTURE_CUBE_MAP);
+    cubeMap->set(cubeMapID, TextureType::TEXTURE_CUBE_MAP);
 
     // convert HDR equirectangular environment map to cubemap equivalent
     shared_ptr<Shader> equirectangularToCubemapShader = make_shared<Shader>("Shaders/cube_map.vert", "Shaders/equirectangular_to_cubemap.frag");
     equirectangularToCubemapShader->use();
     equirectangularToCubemapShader->setAttrMat4("projection", captureProjection);
-    equirectangularToCubemapShader->setTexture("equirectangularMap", 0, &hdrTexture);
+    equirectangularToCubemapShader->setTexture("equirectangularMap", 0, hdrTexture);
 
     glViewport(0, 0, cubeSideLength, cubeSideLength);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
@@ -136,7 +136,7 @@ void CubeMap::drawAsSkybox(const glm::mat4 & view, const glm::mat4 & projection)
     skyboxShader->setAttrMat4("view", view);
     skyboxShader->setAttrMat4("projection", projection);
     skyboxShader->setAttrB("gammaCorrection", gammaCorrection);
-    skyboxShader->setTexture("skybox", 0, &cubeMap);
+    skyboxShader->setTexture("skybox", 0, cubeMap);
 
     box.draw(skyboxShader);
 
@@ -165,7 +165,7 @@ void CubeMap::generateIrradianceMap()
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    irradianceMap.set(irradianceMapID, TextureType::TEXTURE_CUBE_MAP);
+    irradianceMap->set(irradianceMapID, TextureType::TEXTURE_CUBE_MAP);
 
     unsigned int captureFBO;
     glGenFramebuffers(1, &captureFBO);
@@ -175,7 +175,7 @@ void CubeMap::generateIrradianceMap()
     shared_ptr<Shader> convolutionShader = make_shared<Shader>("Shaders/cube_map.vert", "Shaders/irradiance_convolution.frag");
     convolutionShader->use();
     convolutionShader->setAttrMat4("projection", captureProjection);
-    convolutionShader->setTexture("environmentMap", 0, &cubeMap);
+    convolutionShader->setTexture("environmentMap", 0, cubeMap);
 
     glViewport(0, 0, 32, 32);
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
@@ -208,7 +208,7 @@ void CubeMap::generatePrefilterMap()
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     // generate mipmaps for the cubemap so OpenGL automatically allocates the required memory.
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
-    prefilterMap.set(prefilterMapID, TextureType::TEXTURE_CUBE_MAP);
+    prefilterMap->set(prefilterMapID, TextureType::TEXTURE_CUBE_MAP);
 
     unsigned int captureFBO;
     glGenFramebuffers(1, &captureFBO);
@@ -218,7 +218,7 @@ void CubeMap::generatePrefilterMap()
     shared_ptr<Shader> prefilterShader = make_shared<Shader>("Shaders/cube_map.vert", "Shaders/prefilter.frag");
     prefilterShader->use();
     prefilterShader->setAttrMat4("projection", captureProjection);
-    prefilterShader->setTexture("environmentMap", 0, &cubeMap);
+    prefilterShader->setTexture("environmentMap", 0, cubeMap);
 
     glBindFramebuffer(GL_FRAMEBUFFER, captureFBO);
     unsigned int maxMipLevels = 5;
@@ -258,7 +258,7 @@ void CubeMap::generateBrdfLUTTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    brdfLUTTexture.set(brdfLUTTextureID, TextureType::TEXTURE_2D);
+    brdfLUTTexture->set(brdfLUTTextureID, TextureType::TEXTURE_2D);
 
     unsigned int captureFBO;
     glGenFramebuffers(1, &captureFBO);
@@ -296,4 +296,9 @@ void CubeMap::init()
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
         glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
     };
+
+    cubeMap = make_shared<Texture>();
+    irradianceMap = make_shared<Texture>();
+    prefilterMap = make_shared<Texture>();
+    brdfLUTTexture = make_shared<Texture>();
 }

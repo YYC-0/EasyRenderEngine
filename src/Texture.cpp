@@ -3,6 +3,18 @@
 #include "../include/stb_image.h"
 #include <iostream>
 
+Texture::~Texture()
+{
+	if (type == TextureType::TEXTURE_1D_ARRAY ||
+		type == TextureType::TEXTURE_2D_ARRAY ||
+		type == TextureType::TEXTURE_CUBE_MAP_ARRAY)
+	{
+
+	}
+	else
+		glDeleteTextures(1, &id);
+}
+
 bool Texture::load(string imgPath)
 {
 	glGenTextures(1, &id);
@@ -37,6 +49,7 @@ bool Texture::load(string imgPath)
 		cout << "Texture \"" << imgPath << "\" failed to load!" << endl;
 		return false;
 	}
+	cout << "id: " << id << endl;
 }
 
 void Texture::set(unsigned int id_, TextureType textureType)

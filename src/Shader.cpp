@@ -105,9 +105,9 @@ void Shader::setMeterial(shared_ptr<Material> mtl)
 	setAttrB("useSpecularMap", mtl->useSpecularMap);
 	setAttrB("useNormalMap", mtl->useNormalMap);
 
-	setTexture("mtl.diffuseT", 2, &mtl->diffuseMap);
-	setTexture("mtl.normalT", 3, &mtl->normalMap);
-	setTexture("mtl.specularT", 4, &mtl->specularMap);
+	setTexture("mtl.diffuseT", 2, mtl->diffuseMap);
+	setTexture("mtl.normalT", 3, mtl->normalMap);
+	setTexture("mtl.specularT", 4, mtl->specularMap);
 
 	// textures
 	//if (mtl->useDiffuseMap)
@@ -142,48 +142,24 @@ void Shader::setPBRMeterial(shared_ptr<PBRMaterial> mtl)
 	//setAttrB("useIrradianceMap", mtl->useIrradianceMap);
 
 	// textures
-	setAttrI("mtl.albedoT", 2);
-	setAttrI("mtl.normalT", 3);
-	setAttrI("mtl.metallicT", 4);
-	setAttrI("mtl.roughnessT", 5);
-	setAttrI("mtl.aoT", 6);
-	if (mtl->useAlbedoMap)
-	{
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, mtl->albedoMap.getID());
-	}
-	else
+	setTexture("mtl.albedoT", 2, mtl->albedoMap);
+	setTexture("mtl.normalT", 3, mtl->normalMap);
+	setTexture("mtl.metallicT", 4, mtl->metallicMap);
+	setTexture("mtl.roughnessT", 5, mtl->roughnessMap);
+	setTexture("mtl.aoT", 6, mtl->aoMap);
+
+	if (!mtl->useAlbedoMap)
 		setAttrVec3("mtl.albedo", mtl->albedo);
-	if (mtl->useNormalMap)
-	{
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, mtl->normalMap.getID());
-	}
-	if (mtl->useMetallicMap)
-	{
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, mtl->metallicMap.getID());
-	}
-	else
+	if (!mtl->useMetallicMap)
 		setAttrF("mtl.metallic", mtl->metallic);
-	if (mtl->useRoughnessMap)
-	{
-		glActiveTexture(GL_TEXTURE5);
-		glBindTexture(GL_TEXTURE_2D, mtl->roughnessMap.getID());
-	}
-	else
+	if (!mtl->useRoughnessMap)
 		setAttrF("mtl.roughness", mtl->roughness);
-	if (mtl->useAoMap)
-	{
-		glActiveTexture(GL_TEXTURE6);
-		glBindTexture(GL_TEXTURE_2D, mtl->aoMap.getID());
-	}
-	else
+	if (!mtl->useAoMap)
 		setAttrF("mtl.ao", mtl->ao);
 
 }
 
-void Shader::setTexture(const std::string &name, int idx, Texture *texture)
+void Shader::setTexture(const std::string &name, int idx, shared_ptr<Texture> texture)
 {
 	if (idx < 0 || idx >= 32)
 	{
@@ -193,7 +169,8 @@ void Shader::setTexture(const std::string &name, int idx, Texture *texture)
 	}
 	else
 	{
-		textures[idx] = texture;
+		if(texture)
+			textures[idx] = texture;
 		setAttrI(name, idx);
 	}
 }

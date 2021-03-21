@@ -49,17 +49,21 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
     glDisable(GL_MULTISAMPLE); // default disable multisample anti-aliasing
     //glEnable(GL_FRAMEBUFFER_SRGB);
 
+    shadowMap = make_shared<Texture>();
+    cubeShadowMap = make_shared<Texture>();
+    renderTexture = make_shared<Texture>();
+
     // loading shader
     depthMapShader = make_shared<Shader>("./shaders/shadow_mapping.vert", "./shaders/shadow_mapping.frag");
     cubeDepthMapShader = make_shared<Shader>("./shaders/point_shadows_depth.vert", "./shaders/point_shadows_depth.frag", "./shaders/point_shadows_depth.geom");
     phongShader = Shader::phong();
     addShader("phong", phongShader);
     screenShader = make_shared<Shader>("./shaders/texture_to_screen.vert", "./shaders/texture_to_screen.frag");
-    screenShader->setTexture("screenTexture", 0, &renderTexture);
+    screenShader->setTexture("screenTexture", 0, renderTexture);
 
     pair<unsigned int, unsigned int> bufferIDs = createFrameBuffer(windowWidth, windowHeight);
     framebuffer = bufferIDs.first;
-    renderTexture.set(bufferIDs.second, TextureType::TEXTURE_2D);
+    renderTexture->set(bufferIDs.second, TextureType::TEXTURE_2D);
     bufferIDs = createFrameBuffer(windowWidth, windowHeight);
     postProcessFB = bufferIDs.first;
     postProcessRenderTexture = bufferIDs.second;
@@ -67,8 +71,8 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
 
     initShadowMap();
     initCubeShadowMap();
-    phongShader->setTexture("shadowMap", 0, &shadowMap);
-    phongShader->setTexture("cubeDepthMap", 1, &cubeShadowMap);
+    phongShader->setTexture("shadowMap", 0, shadowMap);
+    phongShader->setTexture("cubeDepthMap", 1, cubeShadowMap);
 
     // print gl versions
     //const GLubyte *renderer = glGetString(GL_RENDERER);
@@ -241,9 +245,9 @@ void Renderer::addEnvironmentMap(shared_ptr<CubeMap> envMap_)
     if (!pbrShader)
         pbrShader = Shader::pbr();
 
-    pbrShader->setTexture("irradianceMap", 7, &envMap_->getIrradianceMap());
-    pbrShader->setTexture("prefilterMap", 8, &envMap_->getPrefilterMapID());
-    pbrShader->setTexture("brdfLUT", 9, &envMap_->getBrdfLUTTextureID());
+    pbrShader->setTexture("irradianceMap", 7, envMap_->getIrradianceMap());
+    pbrShader->setTexture("prefilterMap", 8, envMap_->getPrefilterMapID());
+    pbrShader->setTexture("brdfLUT", 9, envMap_->getBrdfLUTTextureID());
 
 }
 
@@ -405,7 +409,7 @@ void Renderer::initShadowMap()
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    shadowMap.set(depthMaps, TextureType::TEXTURE_2D_ARRAY);
+    shadowMap->set(depthMaps, TextureType::TEXTURE_2D_ARRAY);
 }
 
 void Renderer::initCubeShadowMap()
@@ -437,7 +441,7 @@ void Renderer::initCubeShadowMap()
         std::cout << "Point light shadow framebuffer not complete!" << std::endl;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    cubeShadowMap.set(cubeDepthMap, TextureType::TEXTURE_CUBE_MAP_ARRAY);
+    cubeShadowMap->set(cubeDepthMap, TextureType::TEXTURE_CUBE_MAP_ARRAY);
 }
 
 void Renderer::drawSkybox()

@@ -1,12 +1,31 @@
 #include "../include/Material.h"
 #include <iostream>
 
-Material::Material()
+Material::Material(vec3 ambient_, vec3 diffuse_, vec3 specular_, float shininess_) :
+	ambient(ambient_), 
+	diffuse(diffuse_), 
+	specular(specular_), 
+	shininess(shininess_),
+	useDiffuseMap(false), 
+	useNormalMap(false),
+	useSpecularMap(false), 
+	usePBR(false),
+	diffuseMap(nullptr),
+	normalMap(nullptr),
+	specularMap(nullptr)
 {
-	init();
 }
 
-void Material::setTexture(Texture texture, MaterialMapType type)
+Material::Material() : 
+	diffuseMap(nullptr),
+	normalMap(nullptr),
+	specularMap(nullptr)
+{
+	init();
+}	
+
+
+void Material::setTexture(shared_ptr<Texture> texture, MaterialMapType type)
 {
 	switch (type)
 	{
@@ -29,8 +48,8 @@ void Material::setTexture(Texture texture, MaterialMapType type)
 
 void Material::loadTexture(std::string path, MaterialMapType type)
 {
-	Texture t;
-	t.load(path);
+	shared_ptr<Texture> t = make_shared<Texture>();
+	t->load(path);
 	setTexture(t, type);
 }
 
@@ -46,28 +65,73 @@ void Material::init()
 	usePBR = false;
 }
 
+PBRMaterial::PBRMaterial() :
+	albedoMap(nullptr),
+	normalMap(nullptr),
+	metallicMap(nullptr),
+	roughnessMap(nullptr),
+	aoMap(nullptr),
+	irradianceMap(nullptr),
+	prefilterMap(nullptr),
+	brdfLUT(nullptr)
+{
+	init();
+}
+
+PBRMaterial::PBRMaterial(vec3 albedo_, float metallic_, float roughness_, float ao_) :
+	albedo(albedo_), 
+	metallic(metallic_), 
+	roughness(roughness_), 
+	ao(ao_),
+	useAlbedoMap(false), 
+	useNormalMap(false), 
+	useMetallicMap(false),
+	useRoughnessMap(false), 
+	useAoMap(false),
+	albedoMap(nullptr),
+	normalMap(nullptr),
+	metallicMap(nullptr),
+	roughnessMap(nullptr),
+	aoMap(nullptr),
+	irradianceMap(nullptr),
+	prefilterMap(nullptr),
+	brdfLUT(nullptr)
+{
+	usePBR = true;
+}
+
 void PBRMaterial::loadTexture(std::string path, MaterialMapType type)
 {
 	switch (type)
 	{
 	case MaterialMapType::Albedo:
-		albedoMap.load(path);
+		if (!albedoMap)
+			albedoMap = make_shared<Texture>();
+		albedoMap->load(path);
 		useAlbedoMap = true;
 		break;
 	case MaterialMapType::Normal:
-		normalMap.load(path);
+		if (!normalMap)
+			normalMap = make_shared<Texture>();
+		normalMap->load(path);
 		useNormalMap = true;
 		break;
 	case MaterialMapType::Metallic:
-		metallicMap.load(path);
+		if (!metallicMap)
+			metallicMap = make_shared<Texture>();
+		metallicMap->load(path);
 		useMetallicMap = true;
 		break;
 	case MaterialMapType::Roughness:
-		roughnessMap.load(path);
+		if (!roughnessMap)
+			roughnessMap = make_shared<Texture>();
+		roughnessMap->load(path);
 		useRoughnessMap = true;
 		break;
 	case MaterialMapType::Ao:
-		aoMap.load(path);
+		if (!aoMap)
+			aoMap = make_shared<Texture>();
+		aoMap->load(path);
 		useAoMap = true;
 		break;
 	default:
@@ -84,11 +148,6 @@ void PBRMaterial::loadTextures(std::string fileFolderPath)
 	loadTexture(fileFolderPath + "/metallic.png", MaterialMapType::Metallic);
 	loadTexture(fileFolderPath + "/normal.png", MaterialMapType::Normal);
 	loadTexture(fileFolderPath + "/roughness.png", MaterialMapType::Roughness);
-}
-
-void PBRMaterial::setIrradianceMap(Texture T)
-{
-	irradianceMap = T;
 }
 
 void PBRMaterial::init()

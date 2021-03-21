@@ -22,10 +22,13 @@ public:
 	Texture() = default;
 	Texture(unsigned int id_, TextureType textureType) :
 		id(id_), type(textureType) {}
+	~Texture();
+
 	bool load(string imgPath);
 	void set(unsigned int id_, TextureType textureType);
 	unsigned int getID() const { return id; }
 	TextureType getType() const { return type; }
+	void generate(TextureType t);
 
 private:
 	unsigned int id;

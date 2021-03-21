@@ -221,7 +221,7 @@ void Gui::mtlGUI(string mtlName)
         {
             // Textures
             ImGui::Text("Albedo:    "); ImGui::SameLine();
-            ImGui::Image((void *)(intptr_t)pbrMtl->albedoMap.getID(), imgSize);
+            ImGui::Image((void *)(intptr_t)pbrMtl->albedoMap->getID(), imgSize);
         }
         else
         {
@@ -235,7 +235,7 @@ void Gui::mtlGUI(string mtlName)
         if (pbrMtl->useMetallicMap)
         {
             ImGui::Text("Metallic:  "); ImGui::SameLine();
-            ImGui::Image((void *)(intptr_t)pbrMtl->metallicMap.getID(), imgSize);
+            ImGui::Image((void *)(intptr_t)pbrMtl->metallicMap->getID(), imgSize);
         }
         else
         {
@@ -246,7 +246,7 @@ void Gui::mtlGUI(string mtlName)
         if (pbrMtl->useRoughnessMap)
         {
             ImGui::Text("Roughness: "); ImGui::SameLine();
-            ImGui::Image((void *)(intptr_t)pbrMtl->roughnessMap.getID(), imgSize);
+            ImGui::Image((void *)(intptr_t)pbrMtl->roughnessMap->getID(), imgSize);
         }
         else
         {
@@ -256,12 +256,12 @@ void Gui::mtlGUI(string mtlName)
         if (pbrMtl->useNormalMap)
         {
             ImGui::Text("Normal Map:"); ImGui::SameLine();
-            ImGui::Image((void *)(intptr_t)pbrMtl->normalMap.getID(), imgSize);
+            ImGui::Image((void *)(intptr_t)pbrMtl->normalMap->getID(), imgSize);
         }
         if (pbrMtl->useAoMap)
         {
             ImGui::Text("Ao Map:    "); ImGui::SameLine();
-            ImGui::Image((void *)(intptr_t)pbrMtl->aoMap.getID(), imgSize);
+            ImGui::Image((void *)(intptr_t)pbrMtl->aoMap->getID(), imgSize);
         }
     }
     else
@@ -278,7 +278,7 @@ void Gui::mtlGUI(string mtlName)
         {
             // Textures
             ImGui::Text("Diffuse:    "); ImGui::SameLine();
-            ImGui::Image((void *)(intptr_t)mtl->diffuseMap.getID(), imgSize);
+            ImGui::Image((void *)(intptr_t)mtl->diffuseMap->getID(), imgSize);
         }
         else
         {
@@ -292,7 +292,7 @@ void Gui::mtlGUI(string mtlName)
         if (mtl->useSpecularMap)
         {
             ImGui::Text("Specular: "); ImGui::SameLine();
-            ImGui::Image((void *)(intptr_t)mtl->specularMap.getID(), imgSize);
+            ImGui::Image((void *)(intptr_t)mtl->specularMap->getID(), imgSize);
         }
         else
         {
@@ -306,7 +306,7 @@ void Gui::mtlGUI(string mtlName)
         if (mtl->useNormalMap)
         {
             ImGui::Text("Normal:  "); ImGui::SameLine();
-            ImGui::Image((void *)(intptr_t)mtl->normalMap.getID(), imgSize);
+            ImGui::Image((void *)(intptr_t)mtl->normalMap->getID(), imgSize);
         }
 
     }

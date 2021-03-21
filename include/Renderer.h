@@ -75,8 +75,8 @@ private:
 	shared_ptr<Shader> depthMapShader;
 	shared_ptr<Shader> cubeDepthMapShader;
 	vector<GLuint> depthMapFBOs;
-	Texture shadowMap;
-	Texture cubeShadowMap;
+	shared_ptr<Texture> shadowMap;
+	shared_ptr<Texture> cubeShadowMap;
 	GLuint cubeDepthMapFBO;
 	GLuint depthMaps;	 // directional light shadow array texture
 	GLuint cubeDepthMap; // point light shadow array texture
@@ -103,7 +103,7 @@ private:
 	// Post process
 	Rectangle screenQuad;
 	unsigned int framebuffer;
-	Texture renderTexture;
+	shared_ptr<Texture> renderTexture;
 	unsigned int postProcessFB;
 	unsigned int postProcessRenderTexture;
 	vector<shared_ptr<Shader>> postProcessingShaders;
