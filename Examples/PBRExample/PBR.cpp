@@ -7,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Renderer.h"
+#include "Utility.h"
 
 #include <iostream>
 #include <memory>
@@ -25,7 +26,7 @@ public:
 
         // create camera
         float aspect = (float)windowWidth / (float)windowHeight;
-        camera = make_shared<Camera>(aspect, glm::vec3(-3.0f, 6.0f, -3.0f), glm::vec3(1.0f, -1.0f, 1.0f));
+        camera = make_shared<Camera>(aspect, glm::vec3(-3.5f, -1.5f, 12.2f), glm::vec3(0.3f, 0.1f, -0.9f));
 
         // create light
         pointLight1 = make_shared<PointLight>(vec3(0, 10, 0));
@@ -38,31 +39,13 @@ public:
         cubeMap->loadHdr("./resources/pbr/textures/hdr/Brooklyn_Bridge_Planks_2k.hdr", 1024);
 
         // create meshes
-        //float interval = 2.5;
-        //for (int i = 0; i <= 7; ++i)
-        //{
-        //    for (int j = 0; j <= 7; ++j) 
-        //    {
-        //        shared_ptr<Sphere> sphere = make_shared<Sphere>(1.0, 4, vec3(i * interval, 0.0, j * interval));
-        //        shared_ptr<PBRMaterial> pbrMtl = make_shared<PBRMaterial>(
-        //                vec3(1.0, 0.0, 0.0), // albedo
-        //                i/7.0,              // mtallic
-        //                std::max(0.05, j/7.0),  // roughness
-        //                1.0);     // ao
-
-        //        sphere->setMaterial(pbrMtl);
-        //        spheres.push_back(sphere);
-        //    }
-        //}
-
         spheres.resize(8);
         for(int i=0; i<spheres.size(); ++i)
-            spheres[i] = make_shared<Sphere>(1.0, 5, vec3(cos(i* M_PI/4.0) * 4, 0.0, sin(i*M_PI/4.0) * 4));
-        //sphere0 = make_shared<Sphere>(1.0, 5, vec3(0.0, 3.0, 0.0));
+            spheres[i] = make_shared<Sphere>(1.0, 5, vec3(cos(i* M_PI/4.0) * 4, sin(i*M_PI/4.0) * 4, 0.0));
 
         suzanne = make_shared<Model>("./resources/suzanne.obj");
         suzanne->setScale(vec3(1.5));
-        suzanne->setRotateY(180);
+        //suzanne->setRotateY(180);
 
         // create material
         shared_ptr<PBRMaterial> wood = make_shared<PBRMaterial>();
@@ -131,9 +114,6 @@ public:
 
     virtual void userEvents()
     {
-        //for (auto sphere : spheres)
-        //    draw(sphere);
-        //draw(suzanne);
     }
 
 private:

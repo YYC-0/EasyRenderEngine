@@ -1,4 +1,5 @@
 #include "..\include\Utility.h"
+#include <iostream>
 
 void Utility::split(const string & s, vector<string>& tokens, const string & delimiters)
 {
@@ -25,4 +26,11 @@ string Utility::getSuffix(const string & fileName)
     if (pos != string::npos)
         return fileName.substr(pos + 1, fileName.size());
     return "";
+}
+
+void Utility::printVec(const glm::vec3 &v)
+{
+    cout << "x: " << v.x
+        << " y: " << v.y
+        << " z: " << v.z;
 }

@@ -74,6 +74,9 @@ public:
 		return projectionMatrix;
 	}
 
+	glm::vec3 getPos() const { return position; }
+	glm::vec3 getViewDir() const { return front; }
+
 	// 处理键盘输入
 	void processKeyboard(CameraMovement direction, float deltaTime);
 
@@ -82,6 +85,15 @@ public:
 
 	// 处理鼠标滚轮
 	void processMouseScroll(float yoffset);
+
+
+private:
+	glm::vec3 front;
+	glm::vec3 up;
+	glm::vec3 right;
+	// matrix
+	glm::mat4 projectionMatrix;
+	glm::mat4 viewMatrix;
 
 	// 摄影机属性
 	CameraType projectionType;
@@ -105,15 +117,6 @@ public:
 	// 正交投影
 	float orthoWidth;
 	float orthoHeight;
-
-private:
-	glm::vec3 front;
-	glm::vec3 up;
-	glm::vec3 right;
-	// matrix
-	glm::mat4 projectionMatrix;
-	glm::mat4 viewMatrix;
-
 
 	// 从欧拉角计算 front 向量
 	void updateCameraVectors();

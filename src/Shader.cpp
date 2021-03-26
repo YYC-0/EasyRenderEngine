@@ -82,7 +82,7 @@ void Shader::setCamera(const Camera &camera)
 {
 	glm::mat4 projection = camera.getProjectionMatrix();
 	glm::mat4 view = camera.getViewMatrix();
-	setAttrVec3("viewPos", camera.position);
+	setAttrVec3("viewPos", camera.getPos());
 	setAttrMat4("projection", projection);
 	setAttrMat4("view", view);
 }
