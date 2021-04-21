@@ -17,6 +17,7 @@ Renderer::Renderer() :
     lightFarPlane(100.0f),
     dirLightNumMax(5),
     pointLightNumMax(10),
+    RSMBufferSize(1024),
     gui(nullptr),
     skybox(nullptr),
     pbrShader(nullptr),
@@ -73,6 +74,11 @@ void Renderer::init(string windowName, int windowWidth, int windowHeight)
     initCubeShadowMap();
     phongShader->setTexture("shadowMap", 0, shadowMap);
     phongShader->setTexture("cubeDepthMap", 1, cubeShadowMap);
+    initialRSMBuffers();
+    phongShader->setTexture("RSM_Depth", 5, RSM_depth);
+    phongShader->setTexture("RSM_Position", 6, RSM_position);
+    phongShader->setTexture("RSM_Normal", 7, RSM_normal);
+    phongShader->setTexture("RSM_Flux", 8, RSM_flux);
 
     // print gl versions
     //const GLubyte *renderer = glGetString(GL_RENDERER);
@@ -117,7 +123,9 @@ void Renderer::run()
             gui->show();
 
         // render shadow map
+        glEnable(GL_DEPTH_TEST);
         renderShadowMap();
+        renderRSMBuffers();
 
         // set shader uniforms
         for (auto &shader_ : shaders)
@@ -307,7 +315,7 @@ void Renderer::renderShadowMap()
     for (auto &light : dirLights)
     {
         shared_ptr<DirectionalLight> dirLight = light.second;
-        lightProjection = ortho(-40.0f, 40.0f, -40.0f, 40.0f, lightNearPlane, lightFarPlane);
+        lightProjection = ortho(-30.0f, 30.0f, -30.0f, 30.0f, lightNearPlane, lightFarPlane);
         lightView = lookAt(-dirLight->getDir() * vec3(20.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
         depthMapShader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
@@ -328,13 +336,9 @@ void Renderer::renderShadowMap()
         dirLightNum++;
     }
 
-    glCullFace(GL_BACK);
-   // glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
 
     // render point light shadow map
     int pointLightNum = 0;
-    glCullFace(GL_FRONT); // use cull front face to avoid peter panning
     glViewport(0, 0, pointShadowWidth, pointShadowHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, cubeDepthMapFBO);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -384,6 +388,7 @@ void Renderer::initShadowMap()
         glGenFramebuffers(1, &depthMapFBOs[i]);
 
     // create depth texture
+    GLuint depthMaps;
     glGenTextures(1, &depthMaps);
     glBindTexture(GL_TEXTURE_2D_ARRAY, depthMaps);
     //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -416,7 +421,8 @@ void Renderer::initCubeShadowMap()
 {
     // using cube map
     glGenFramebuffers(1, &cubeDepthMapFBO);
-    
+
+    GLuint cubeDepthMap;
     glGenTextures(1, &cubeDepthMap);
     glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, cubeDepthMap);
     glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, GL_DEPTH_COMPONENT,
@@ -503,6 +509,83 @@ void Renderer::postProcessing()
         screenQuad.draw(shader);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+}
+
+void Renderer::initialRSMBuffers()
+{
+    glGenFramebuffers(1, &RSMBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, RSMBuffer);
+    // bind four textures. depth, world space coordinates, normal, flux
+    GLuint depth, pos, normal, flux;
+    // depth
+    glGenTextures(1, &depth);
+    glBindTexture(GL_TEXTURE_2D, depth);
+    //glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, RSMBufferSize, RSMBufferSize, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    GLfloat borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depth, 0);
+    // position
+    glGenTextures(1, &pos);
+    glBindTexture(GL_TEXTURE_2D, pos);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, RSMBufferSize, RSMBufferSize, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pos, 0);
+    // normal
+    glGenTextures(1, &normal);
+    glBindTexture(GL_TEXTURE_2D, normal);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, RSMBufferSize, RSMBufferSize, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, normal, 0);
+    // flux
+    glGenTextures(1, &flux);
+    glBindTexture(GL_TEXTURE_2D, flux);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, RSMBufferSize, RSMBufferSize, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, flux, 0);
+
+    GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+    glDrawBuffers(3, attachments);
+
+    RSM_depth = make_shared<Texture>(depth, TextureType::TEXTURE_2D);
+    RSM_position = make_shared<Texture>(pos, TextureType::TEXTURE_2D);
+    RSM_normal = make_shared<Texture>(normal, TextureType::TEXTURE_2D);
+    RSM_flux = make_shared<Texture>(flux, TextureType::TEXTURE_2D);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    RSMBufferShader = make_shared<Shader>("./shaders/RSM_buffer.vert", "./shaders/RSM_buffer.frag");
+}
+
+void Renderer::renderRSMBuffers()
+{
+    shared_ptr<DirectionalLight> dirLight = dirLights.begin()->second;
+    mat4 lightProjection = ortho(-30.0f, 30.0f, -30.0f, 30.0f, lightNearPlane, lightFarPlane);
+    mat4 lightView = lookAt(-dirLight->getDir() * vec3(25.0f), vec3(0.0f), vec3(0.0, 1.0, 0.0));
+    mat4 lightSpaceMatrix = lightProjection * lightView;
+
+    RSMBufferShader->setAttrMat4("lightSpaceMatrix", lightSpaceMatrix);
+    for (auto &shader_ : shaders)
+    {
+        shared_ptr<Shader> &shader = shader_.second;
+        shader->setAttrMat4("RSM_lightSpaceMatrix", lightSpaceMatrix);
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, RSMBuffer);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, RSMBufferSize, RSMBufferSize);
+    for (auto &object : renderObjects)
+        object.second->draw(RSMBufferShader);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
 }
 
 void Renderer::userEvents()

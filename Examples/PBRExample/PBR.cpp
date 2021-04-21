@@ -7,7 +7,6 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "Renderer.h"
-#include "Utility.h"
 
 #include <iostream>
 #include <memory>

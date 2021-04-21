@@ -1,5 +1,9 @@
 #version 460 core
 #extension GL_EXT_texture_array : enable
+const int SAMPLE_NUM = 800;
+const float PI = 3.141592653589793;
+const float PI2 = 6.283185307179586;
+
 out vec4 FragColor;
 
 uniform float shininess;
@@ -46,14 +50,24 @@ uniform sampler2DArray shadowMap;
 uniform samplerCubeArray cubeDepthMap;
 uniform float far_plane;
 
+in vec4 RSM_FragPoslightSpace;
+uniform sampler2D RSM_Depth;
+uniform sampler2D RSM_Position;
+uniform sampler2D RSM_Normal;
+uniform sampler2D RSM_Flux;
+
 vec3 computeLight(Light light, vec3 objDiffuse, vec3 objSpecular);
 float dirShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, int dirLightNum);
 float pointShadowCalculation(vec3 fragPos, vec3 lightPos, int pointLightNum);
+vec3 RSM();
 
 int dirLightNum = 0;
 int pointLightNum = 0;
 vec3 normal;
 
+float random(float x){
+    return fract(sin(x)*100000.0);
+}
 
 void main()
 {
@@ -64,7 +78,7 @@ void main()
         normal = normalize(normal * 2.0 - 1.0);
         normal = normalize(TBN * normal);
     }
-//    FragColor = vec4(normal, 1.0);
+
     vec3 objDiffuse;
     vec3 objSpecular;
     if(useDiffuseMap)
@@ -76,19 +90,17 @@ void main()
     else
         objSpecular = mtl.specular;
 
-    vec3 result;
+    vec3 directIllumination;
+    vec3 indirectIllumination = RSM();
     for(int i=0; i<lightNum; ++i)
     {
-        result += computeLight(lights[i], objDiffuse, objSpecular);
-    }
-    
-    FragColor = vec4(result, 1.0);
-    
-//    vec3 fragToLight = FragPos - lights[0].position;
-//    float closestDepth = texture(cubeDepthMap, vec4(fragToLight, pointLightNum)).r;
-//    closestDepth *= far_plane;
-//    FragColor = vec4(vec3(closestDepth / far_plane), 1.0);
 
+        directIllumination += computeLight(lights[i], objDiffuse, objSpecular);
+    }
+
+    vec3 result = directIllumination + 0.1 * indirectIllumination;
+
+    FragColor = vec4(result, 1.0);
 } 
 
 vec3 computeLight(Light light, vec3 objDiffuse, vec3 objSpecular)
@@ -186,4 +198,27 @@ float pointShadowCalculation(vec3 fragPos, vec3 lightPos, int pointLightNum)
     shadow /= float(samples);
     
     return shadow;
+}
+
+vec3 RSM()
+{
+    vec3 indirectIllumination = vec3(0.0);
+    vec2 texelSize = 1.0 / textureSize(RSM_Position, 0).xy;
+
+    vec3 coord = RSM_FragPoslightSpace.xyz / RSM_FragPoslightSpace.w;
+    coord = coord * 0.5 + 0.5;
+
+    float rMax = textureSize(RSM_Position, 0).x / 4.0;
+    for(float i=1; i<=SAMPLE_NUM; i+=1.0)
+    {
+        float r1 = random(i);
+        float r2 = random(i+0.5);
+        vec2 c = coord.xy + rMax * vec2(r1*sin(PI2*r2), r1*cos(PI2*r2)) * texelSize;
+        vec3 flux = texture(RSM_Flux, c).rgb;
+        vec3 xp = texture(RSM_Position, c).rgb;
+        vec3 np = texture(RSM_Normal, c).rgb;
+        vec3 e = flux * (max(0, dot(np,FragPos-xp)) * max(0, dot(normal,xp-FragPos)) / pow(distance(xp,FragPos),2.0));
+        indirectIllumination += r1*r1 * e;
+    }
+    return indirectIllumination;
 }

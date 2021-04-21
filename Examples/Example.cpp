@@ -37,16 +37,19 @@ public:
 
         // create meshes
         cube = make_shared<Cube>(1.0, 1.0, 1.0); // size
+        plane = make_shared<Cube>(10.0, 0.1, 10.0); // size
+        plane->setPosition(vec3(0, -1, 0));
         // ---cube material
         shared_ptr<Material> cubeMaterial = make_shared<Material>();
         shared_ptr<Material> planeMaterial = make_shared<Material>();
         cubeMaterial->loadTexture("./resources/brickwall.jpg", MaterialMapType::Diffuse);
         cubeMaterial->loadTexture("./resources/brickwall_normal.jpg", MaterialMapType::Normal);
-        cube->setMaterial(cubeMaterial);
+        cube->setMaterial(planeMaterial);
+        plane->setMaterial(planeMaterial);
 
         // sponza
-        sponza = make_shared<Model>("./resources/models/Sponza-master/sponza.obj");
-        sponza->setScale({ 0.01, 0.01, 0.01 });
+        //sponza = make_shared<Model>("./resources/models/Sponza-master/sponza.obj");
+        //sponza->setScale({ 0.01, 0.01, 0.01 });
 
         // skybox
         vector<string> skyboxPath{ "resources/skybox/right.jpg", "resources/skybox/left.jpg",
@@ -63,8 +66,8 @@ public:
         gui->add("dirlight", directionalLight);
 
         // setting
-        //setClearColor(vec3(0, 0, 0));
-        setClearColor(vec3(1.0, 1.0, 1.0));
+        setClearColor(vec3(0, 0, 0));
+        //setClearColor(vec3(1.0, 1.0, 1.0));
         setCamera(camera);
         setMSAA(true);
 
@@ -73,14 +76,15 @@ public:
     virtual void addResources() override
     {
         addObject("cube", cube);
-        addObject("sponza", sponza);
+        addObject("plane", plane);
+       // addObject("sponza", sponza);
 
         addLight("directionalLight", directionalLight);
-        addLight("pointLight", pointLight);
-        addLight("pointLight2", pointLight2);
-        addLight("pointLight3", pointLight3);
+        //addLight("pointLight", pointLight);
+        //addLight("pointLight2", pointLight2);
+       // addLight("pointLight3", pointLight3);
 
-        addSkybox(skybox);
+        //addSkybox(skybox);
 
         addGui(gui);
     }
@@ -95,6 +99,7 @@ private:
     vec3 lightDir;
     shared_ptr<Camera> camera;
     shared_ptr<Cube> cube;
+    shared_ptr<Cube> plane;
     shared_ptr<Model> sponza;
 
     shared_ptr<DirectionalLight> directionalLight;

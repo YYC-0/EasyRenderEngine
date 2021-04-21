@@ -40,6 +40,10 @@
 
 - 天空盒 
 
+- Global illumination
+
+    - RSM
+
 
 
 
@@ -55,4 +59,12 @@ Note：
 
 
 
+**PBR:**
+
 ![image-20210326103654550](images/pbr.png)
+
+
+
+**Global illumination:**
+
+![image-20210421161859117](README.assets/image-20210421161859117.png)

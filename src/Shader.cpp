@@ -12,7 +12,9 @@
 
 shared_ptr<Shader> Shader::phong()
 {
-	shared_ptr<Shader> shader = make_shared<Shader>("./shaders/phong.vert", "./shaders/phong.frag");
+	//记得改回来
+	//shared_ptr<Shader> shader = make_shared<Shader>("./shaders/phong.vert", "./shaders/phong.frag");
+	shared_ptr<Shader> shader = make_shared<Shader>("./shaders/RSM.vert", "./shaders/RSM.frag");
 	return shader;
 }
 
@@ -33,8 +35,6 @@ Shader::Shader(string vertexPath_, string fragmentPath_, string geometryPath_)
 	fragmentPath = fragmentPath_;
 	geometryPath = geometryPath_;
 
-	setAttrI("shadowMap", 0);
-	setAttrI("cubeDepthMap", 1);
 	compile();
 }
 
