@@ -67,4 +67,4 @@ Note：
 
 **Global illumination:**
 
-![image-20210421161859117](README.assets/image-20210421161859117.png)
+![image-20210421161859117](images/RSM.png)
